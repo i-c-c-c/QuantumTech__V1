@@ -1,5 +1,24 @@
 # QuantumTech Spring Boot Backend
 
+## Contributor and Backend Ownership
+
+**Sifat (Backend & Admin Developer)** implemented and owns the following areas:
+
+- Spring Boot backend setup and project structure
+- MongoDB and MongoDB Atlas integration for the `qtechdb` database
+- Admin authentication, JWT sessions, BCrypt passwords, account lockout, and password reset
+- Product, product variant, stock, and category REST APIs
+- Order creation, order tracking, status transitions, cancellation, and inventory restoration
+- bKash and Nagad payment verification and duplicate TrxID protection
+- Store settings and low-stock configuration
+- Owner email notifications, retry attempts, and notification status
+- Review submission, verified-purchase checks, moderation, and rating recalculation
+- Cloudinary image upload integration
+- API validation, error handling, security rules, Swagger documentation, and unit tests
+
+This implementation follows the backend/admin responsibilities assigned to Sifat in the
+QuantumTech sprint document.
+
 This backend implements Sifat's assigned backend/admin work for the QuantumTech project:
 MongoDB Atlas data storage, Spring Security JWT authentication, product/category/order/review
 management, stock safety, payment verification, email notifications, and Cloudinary uploads.
