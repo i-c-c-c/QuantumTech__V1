@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { productService } from '../services/productService';
@@ -93,9 +93,15 @@ export const ProductDetailPage: React.FC = () => {
   const touchStartXRef = useRef<number | null>(null);
   const touchEndXRef = useRef<number | null>(null);
 
-  const images = product.images && product.images.length > 0 ? product.images : [
-    'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80'
-  ];
+  const images = useMemo(() => {
+    const list = product.images && product.images.length > 0 ? [...product.images] : [
+      'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80'
+    ];
+    if (selectedVariant?.image && !list.includes(selectedVariant.image)) {
+      list.push(selectedVariant.image);
+    }
+    return list;
+  }, [product.images, selectedVariant?.image]);
 
   // Auto-switch image if variant has associated image
   useEffect(() => {

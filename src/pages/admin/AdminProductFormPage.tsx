@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { productService } from '../../services/productService';
 import { useToast } from '../../context/ToastContext';
 import { Product, ProductVariant, Category } from '../../types';
 import { Icons } from '../../utilities/icons';
+import { compressImageFile, isValidImageFile } from '../../utilities/imageUtils';
 
 interface AdminProductFormPageProps {
   isEdit?: boolean;
@@ -39,6 +40,10 @@ export const AdminProductFormPage: React.FC<AdminProductFormPageProps> = ({ isEd
     'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80'
   ]);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadingVariantIdx, setUploadingVariantIdx] = useState<number | null>(null);
 
   // Specifications (Key-Value)
   const [specList, setSpecList] = useState<Array<{ key: string; value: string }>>([
@@ -110,7 +115,7 @@ export const AdminProductFormPage: React.FC<AdminProductFormPageProps> = ({ isEd
     }
   }, [isEdit, id, navigate, showToast]);
 
-  // Handle Image Add
+  // Handle Image Add via URL
   const handleAddImage = () => {
     if (!newImageUrl.trim()) return;
     if (images.length >= 6) {
@@ -124,6 +129,74 @@ export const AdminProductFormPage: React.FC<AdminProductFormPageProps> = ({ isEd
     }
     setImages([...images, cleanUrl]);
     setNewImageUrl('');
+  };
+
+  // Handle file uploads for product gallery (with canvas compression)
+  const handleGalleryFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+
+    const availableSlots = 6 - images.length;
+    if (availableSlots <= 0) {
+      showToast('Maximum of 6 images allowed per product.', 'error');
+      return;
+    }
+
+    const toProcess = fileArray.slice(0, availableSlots);
+    if (fileArray.length > availableSlots) {
+      showToast(`Only ${availableSlots} more image(s) can be added (max 6).`, 'warning');
+    }
+
+    setIsUploadingGallery(true);
+    let addedCount = 0;
+    const newCompressedImages: string[] = [];
+
+    for (const file of toProcess) {
+      if (!isValidImageFile(file)) {
+        showToast(`"${file.name}" is not a supported image format (use JPG, PNG, WEBP).`, 'error');
+        continue;
+      }
+      try {
+        const dataUrl = await compressImageFile(file, 1200, 1200, 0.85);
+        newCompressedImages.push(dataUrl);
+        addedCount++;
+      } catch (err: any) {
+        showToast(`Failed to process "${file.name}": ${err.message || 'Error'}`, 'error');
+      }
+    }
+
+    if (newCompressedImages.length > 0) {
+      setImages((prev) => [...prev, ...newCompressedImages]);
+      showToast(`${addedCount} image${addedCount > 1 ? 's' : ''} uploaded successfully!`, 'success');
+    }
+    setIsUploadingGallery(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle file upload for a specific variant (with canvas compression)
+  const handleVariantImageUpload = async (variantIndex: number, file: File) => {
+    if (!isValidImageFile(file)) {
+      showToast('Please select a valid image file (JPG, PNG, WEBP).', 'error');
+      return;
+    }
+
+    setUploadingVariantIdx(variantIndex);
+    try {
+      const dataUrl = await compressImageFile(file, 1000, 1000, 0.85);
+      handleUpdateVariant(variantIndex, 'image', dataUrl);
+
+      // Also add to product gallery if gallery has room and does not already contain it
+      if (images.length < 6 && !images.includes(dataUrl)) {
+        setImages((prev) => [...prev, dataUrl]);
+      }
+      showToast('Variant image uploaded successfully!', 'success');
+    } catch (err: any) {
+      showToast(`Failed to upload variant image: ${err.message || 'Error'}`, 'error');
+    } finally {
+      setUploadingVariantIdx(null);
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -543,45 +616,33 @@ export const AdminProductFormPage: React.FC<AdminProductFormPageProps> = ({ isEd
                     required
                     className={`w-full rounded-xl border p-2.5 text-sm text-ink transition-all ${
                       hasVariants
-                        ? 'bg-slate-100 text-slate-800 cursor-not-allowed border-slate-300 font-bold select-none pr-28'
+                        ? 'bg-slate-100/80 text-slate-800 cursor-not-allowed border-slate-300 font-bold select-none pr-10'
                         : errors.stock
                         ? 'border-error bg-error-soft/20 focus:ring-error-soft focus:outline-none focus:ring-2'
                         : 'border-border focus:border-quantum focus:ring-quantum-soft focus:outline-none focus:ring-2 bg-surface'
                     }`}
                   />
                   {hasVariants && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-xs text-muted pointer-events-none select-none">
-                      <FontAwesomeIcon icon={Icons.lock} className="h-3 w-3 text-slate-400" />
-                      <span className="caption-5 font-semibold text-slate-500">Auto-calculated</span>
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center text-slate-400 pointer-events-none select-none" title="Auto-calculated from variants">
+                      <FontAwesomeIcon icon={Icons.lock} className="h-3.5 w-3.5" />
                     </div>
                   )}
                 </div>
 
                 {/* Status Helpers & Stock Alerts */}
                 {hasVariants ? (
-                  <div className="mt-1.5 flex flex-col gap-1">
-                    <p className="caption-5 text-quantum flex items-center gap-1.5 font-medium">
-                      <FontAwesomeIcon icon={Icons.circleCheck} className="h-3 w-3 text-quantum flex-shrink-0" />
-                      <span>
-                        Total Stock (Automatically calculated from variants: {variantTotalStock} units across {variants.length} variant{variants.length === 1 ? '' : 's'}).
-                      </span>
-                    </p>
+                  <div className="mt-1.5">
                     {variantTotalStock === 0 ? (
                       <span className="caption-5 text-error font-semibold flex items-center gap-1.5">
                         <FontAwesomeIcon icon={Icons.error} className="h-3 w-3 flex-shrink-0" />
-                        <span>All variants are at 0 stock. Product status is Out of Stock.</span>
+                        <span>All variants are at 0 stock. Product is Out of Stock.</span>
                       </span>
                     ) : variantTotalStock <= 5 ? (
                       <span className="caption-5 text-amber-700 font-semibold flex items-center gap-1.5">
                         <FontAwesomeIcon icon={Icons.warning} className="h-3 w-3 flex-shrink-0" />
-                        <span>Low Stock Warning: Total variant stock is &le; 5 units.</span>
+                        <span>Low Stock Warning ({variantTotalStock} units remaining across variants).</span>
                       </span>
-                    ) : (
-                      <span className="caption-5 text-emerald-700 font-semibold flex items-center gap-1.5">
-                        <FontAwesomeIcon icon={Icons.circleCheck} className="h-3 w-3 flex-shrink-0" />
-                        <span>In Stock: Available for storefront purchase.</span>
-                      </span>
-                    )}
+                    ) : null}
                   </div>
                 ) : (
                   <div className="mt-1.5">
@@ -803,6 +864,84 @@ export const AdminProductFormPage: React.FC<AdminProductFormPageProps> = ({ isEd
                       )}
                     </div>
 
+                    {/* Variant Image & Upload / Selector */}
+                    <div className="flex items-center gap-2 bg-surface p-1.5 rounded-lg border border-border/80">
+                      {v.image ? (
+                        <div className="relative group/varimg h-9 w-9 rounded-md overflow-hidden border border-border bg-slate-100 flex-shrink-0">
+                          <img
+                            src={v.image}
+                            alt={v.value || 'Variant'}
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-ink/70 opacity-0 group-hover/varimg:opacity-100 transition-opacity flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateVariant(idx, 'image', '')}
+                              className="h-5 w-5 rounded bg-error text-white text-[9px] flex items-center justify-center hover:bg-error-dark"
+                              title="Remove variant photo"
+                            >
+                              <FontAwesomeIcon icon={Icons.trash} className="h-2.5 w-2.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-9 w-9 rounded-md border border-dashed border-border flex items-center justify-center text-muted bg-surface-alt flex-shrink-0">
+                          <FontAwesomeIcon icon={Icons.image} className="h-3.5 w-3.5 opacity-40" />
+                        </div>
+                      )}
+
+                      {/* Upload Photo Button */}
+                      <label
+                        className={`px-2 py-1.5 rounded-md text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition-colors ${
+                          uploadingVariantIdx === idx
+                            ? 'bg-quantum-soft text-quantum'
+                            : 'bg-surface-alt hover:bg-slate-200 text-ink'
+                        }`}
+                        title="Upload a photo for this variant"
+                      >
+                        {uploadingVariantIdx === idx ? (
+                          <FontAwesomeIcon icon={Icons.spinner} className="h-3 w-3 animate-spin text-quantum" />
+                        ) : (
+                          <FontAwesomeIcon icon={Icons.camera} className="h-3 w-3 text-quantum" />
+                        )}
+                        <span className="text-[11px]">
+                          {uploadingVariantIdx === idx ? 'Processing...' : v.image ? 'Change' : 'Upload'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          data-testid={`variant-image-upload-${idx}`}
+                          disabled={uploadingVariantIdx === idx}
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleVariantImageUpload(idx, e.target.files[0]);
+                            }
+                            e.target.value = '';
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {/* Quick Select from Product Gallery (if gallery has images) */}
+                      {images.length > 0 && (
+                        <select
+                          value={images.includes(v.image || '') ? v.image : ''}
+                          data-testid={`variant-gallery-select-${idx}`}
+                          onChange={(e) => handleUpdateVariant(idx, 'image', e.target.value)}
+                          className="rounded-md border border-border py-1 px-1.5 text-[11px] text-ink bg-surface max-w-[105px] truncate"
+                          title="Pick an image from the product gallery"
+                          aria-label="Pick an image from the product gallery"
+                        >
+                          <option value="">{v.image && !images.includes(v.image) ? 'Custom Image' : 'From Gallery...'}</option>
+                          {images.map((imgUrl, imgI) => (
+                            <option key={imgI} value={imgUrl}>
+                              {imgI === 0 ? 'Cover Photo' : `Gallery #${imgI + 1}`}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
                     <button
                       type="button"
                       data-testid={`remove-variant-btn-${idx}`}
@@ -863,103 +1002,190 @@ export const AdminProductFormPage: React.FC<AdminProductFormPageProps> = ({ isEd
           {/* Card: Images (Up to 6) */}
           <div className="bg-surface rounded-2xl border border-border p-5 shadow-xs flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h3 className="title-3 font-bold text-ink">Product Gallery</h3>
-              <span className="caption-4 px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">
+              <div>
+                <h3 className="title-3 font-bold text-ink">Product Gallery</h3>
+                <p className="caption-4 text-muted">Upload product images (max 6 photos)</p>
+              </div>
+              <span className={`caption-4 px-2.5 py-1 rounded-full font-bold ${
+                images.length >= 6 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
+              }`}>
                 {images.length} / 6
               </span>
             </div>
 
-            <p className="caption-4 text-muted leading-snug">
-              Supports up to 6 high-resolution product images. The first image is the cover.
-            </p>
+            {errors.images && (
+              <div className="p-2.5 rounded-xl bg-error-soft/30 border border-error/30 text-error caption-4 flex items-center gap-2">
+                <FontAwesomeIcon icon={Icons.warning} className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>{errors.images}</span>
+              </div>
+            )}
 
-            {errors.images && <p className="caption-5 text-error">{errors.images}</p>}
+            {/* Direct Upload Dropzone */}
+            {images.length < 6 && (
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  if (e.dataTransfer.files) handleGalleryFiles(e.dataTransfer.files);
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2.5 ${
+                  isDragging
+                    ? 'border-quantum bg-quantum-soft/40 scale-[0.99]'
+                    : 'border-border hover:border-quantum/70 hover:bg-surface-alt/60'
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  data-testid="product-image-file-input"
+                  onChange={(e) => {
+                    if (e.target.files) handleGalleryFiles(e.target.files);
+                  }}
+                  className="hidden"
+                />
 
-            {/* Image Preview Grid */}
-            <div className="grid grid-cols-3 gap-2">
-              {images.map((img, idx) => (
-                <div key={idx} className="relative group rounded-xl overflow-hidden border border-border aspect-square bg-slate-50">
-                  <img src={img} alt={`Preview ${idx + 1}`} className="h-full w-full object-cover" />
-                  
-                  {idx === 0 && (
-                    <span className="absolute top-1 left-1 caption-5 px-1.5 py-0.5 rounded bg-quantum text-white font-bold text-[10px]">
-                      Cover
-                    </span>
-                  )}
-
-                  <div className="absolute inset-0 bg-ink/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
-                    {idx !== 0 && (
-                      <button
-                        type="button"
-                        onClick={() => handleMakeCoverImage(idx)}
-                        className="p-1 rounded bg-white text-ink text-[10px] hover:bg-quantum hover:text-white"
-                        title="Set as cover image"
-                      >
-                        <FontAwesomeIcon icon={Icons.star} className="h-2.5 w-2.5" />
-                      </button>
-                    )}
+                {isUploadingGallery ? (
+                  <div className="flex flex-col items-center gap-2 py-3">
+                    <FontAwesomeIcon icon={Icons.spinner} className="h-6 w-6 text-quantum animate-spin" />
+                    <span className="caption-3 font-bold text-quantum">Compressing and uploading images...</span>
+                    <span className="caption-5 text-muted">Optimizing size for high performance</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="h-11 w-11 rounded-2xl bg-quantum-soft text-quantum flex items-center justify-center shadow-xs">
+                      <FontAwesomeIcon icon={Icons.upload} className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <span className="caption-2 font-bold text-ink block">
+                        Upload Product Images
+                      </span>
+                      <span className="caption-4 text-muted mt-0.5 block">
+                        Click to browse or drag & drop (JPG, PNG, WEBP)
+                      </span>
+                      <span className="caption-5 text-quantum font-medium mt-1 inline-block">
+                        {6 - images.length} image slot{6 - images.length > 1 ? 's' : ''} available
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(idx)}
-                      className="p-1 rounded bg-error text-white text-[10px] hover:bg-error-dark"
-                      title="Delete image"
+                      className="btn-base bg-quantum text-white hover:bg-quantum-hover button-xsm font-semibold shadow-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
                     >
-                      <FontAwesomeIcon icon={Icons.trash} className="h-2.5 w-2.5" />
+                      <FontAwesomeIcon icon={Icons.camera} className="h-3 w-3" />
+                      <span>Choose Photos</span>
                     </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </>
+                )}
+              </div>
+            )}
 
-            {/* Add Image URL Input */}
-            {images.length < 6 && (
-              <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                <label className="caption-5 font-semibold text-slate-600">Add Image URL:</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="url"
-                    value={newImageUrl}
-                    onChange={(e) => setNewImageUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="flex-1 rounded-xl border border-border p-2 text-xs text-ink focus:outline-none focus:border-quantum"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddImage}
-                    className="btn-base bg-quantum text-white hover:bg-quantum-hover button-xsm font-semibold"
-                  >
-                    Add
-                  </button>
+            {/* Image Preview Grid */}
+            {images.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <span className="caption-4 font-bold text-slate-700">Uploaded Photos:</span>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {images.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative group rounded-xl overflow-hidden border border-border aspect-square bg-slate-50 shadow-xs"
+                    >
+                      <img
+                        src={img}
+                        alt={`Product image ${idx + 1}`}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+
+                      {idx === 0 && (
+                        <span className="absolute top-1.5 left-1.5 caption-5 px-2 py-0.5 rounded-full bg-quantum text-white font-bold text-[10px] shadow-sm">
+                          Cover
+                        </span>
+                      )}
+
+                      <div className="absolute inset-0 bg-ink/75 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        {idx !== 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleMakeCoverImage(idx)}
+                            className="h-7 w-7 rounded-lg bg-white text-ink text-xs hover:bg-quantum hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                            title="Set as cover image"
+                          >
+                            <FontAwesomeIcon icon={Icons.star} className="h-3 w-3" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="h-7 w-7 rounded-lg bg-error text-white text-xs hover:bg-error-dark flex items-center justify-center transition-colors shadow-sm"
+                          title="Delete image"
+                        >
+                          <FontAwesomeIcon icon={Icons.trash} className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Quick Sample Presets (For fast testing) */}
+            {/* Alternative: Add Image URL Input & Presets */}
             {images.length < 6 && (
-              <div className="pt-2 border-t border-border">
-                <span className="caption-5 text-muted block mb-1.5 font-semibold">Quick Presets:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => addCuratedPreset('https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80')}
-                    className="caption-5 px-2 py-1 rounded bg-slate-100 text-slate-700 hover:bg-quantum hover:text-white transition-colors"
-                  >
-                    + Charger
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => addCuratedPreset('https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=800&q=80')}
-                    className="caption-5 px-2 py-1 rounded bg-slate-100 text-slate-700 hover:bg-quantum hover:text-white transition-colors"
-                  >
-                    + Earbuds
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => addCuratedPreset('https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80')}
-                    className="caption-5 px-2 py-1 rounded bg-slate-100 text-slate-700 hover:bg-quantum hover:text-white transition-colors"
-                  >
-                    + Smartwatch
-                  </button>
+              <div className="pt-2 border-t border-border flex flex-col gap-3">
+                <div>
+                  <label className="caption-5 font-semibold text-slate-600 block mb-1">Or Add via Image URL:</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      value={newImageUrl}
+                      onChange={(e) => setNewImageUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="flex-1 rounded-xl border border-border p-2 text-xs text-ink focus:outline-none focus:border-quantum bg-surface"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddImage}
+                      className="btn-base bg-quantum text-white hover:bg-quantum-hover button-xsm font-semibold"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="caption-5 text-muted block mb-1 font-semibold">Quick Presets:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => addCuratedPreset('https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80')}
+                      className="caption-5 px-2 py-1 rounded bg-slate-100 text-slate-700 hover:bg-quantum hover:text-white transition-colors"
+                    >
+                      + Charger
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addCuratedPreset('https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=800&q=80')}
+                      className="caption-5 px-2 py-1 rounded bg-slate-100 text-slate-700 hover:bg-quantum hover:text-white transition-colors"
+                    >
+                      + Earbuds
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addCuratedPreset('https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80')}
+                      className="caption-5 px-2 py-1 rounded bg-slate-100 text-slate-700 hover:bg-quantum hover:text-white transition-colors"
+                    >
+                      + Smartwatch
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

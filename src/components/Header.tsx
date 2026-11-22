@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { createPortal } from 'react-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { SearchBar } from './SearchBar';
 import { useCart } from '../context/CartContext';
@@ -9,6 +10,7 @@ import { categoryService } from '../services/categoryService';
 import logoIcon from '../assets/brand/logo-icon.png';
 
 export const Header: React.FC = () => {
+  const location = useLocation();
   const { totalCount, setIsCartOpen } = useCart();
   const { language, setLanguage, t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,6 +32,25 @@ export const Header: React.FC = () => {
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'bn' : 'en');
   };
+
+  // Close menus automatically on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setMobileSearchOpen(false);
+    setCategoriesDropdownOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when mobile menu drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -74,7 +95,8 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-surface/95 backdrop-blur-md">
+    <>
+      <header className="sticky top-0 z-40 w-full border-b border-border bg-surface/95 backdrop-blur-md">
       {/* Top Announcement Bar */}
       <div className="bg-ink text-slate-200 py-1 px-3 text-[11px] sm:text-xs font-medium text-center flex items-center justify-center gap-2 border-b border-slate-800">
         <FontAwesomeIcon icon={Icons.delivery} className="text-quantum-soft h-3 w-3 flex-shrink-0" />
@@ -94,6 +116,7 @@ export const Header: React.FC = () => {
             {/* Mobile Menu Button (44px min touch target) */}
             <button
               type="button"
+              data-testid="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="lg:hidden flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-ink hover:bg-surface-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum"
               aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -106,11 +129,11 @@ export const Header: React.FC = () => {
             </button>
 
             {/* Brand Logo & Name */}
-            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group">
+            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group flex-shrink-0 min-w-0">
               <img
                 src={logoIcon}
                 alt="QuantumTech Logo"
-                className="h-7 w-7 sm:h-8 sm:w-8 object-contain group-hover:scale-105 transition-transform"
+                className="h-7 w-7 sm:h-8 sm:w-8 object-contain flex-shrink-0 group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
                 <span className="text-base sm:text-lg font-bold tracking-tight text-ink leading-none">
@@ -315,38 +338,93 @@ export const Header: React.FC = () => {
           </div>
         )}
       </div>
+    </header>
 
-      {/* Mobile Drawer Navigation (Full height slide-over for Android/iOS) */}
-      {mobileMenuOpen && (
+    {/* Mobile Drawer Navigation (Rendered into document.body via Portal to prevent backdrop-blur containing block clipping) */}
+    {mobileMenuOpen && typeof document !== 'undefined' &&
+      createPortal(
         <div
-          className="fixed inset-0 top-[88px] z-50 bg-ink/50 backdrop-blur-sm lg:hidden animate-fadeIn"
-          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-50 lg:hidden flex"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile Navigation Drawer"
         >
+          {/* Backdrop overlay */}
           <div
-            className="w-4/5 max-w-xs h-full bg-surface border-r border-border p-4 sm:p-5 shadow-float overflow-y-auto flex flex-col justify-between"
+            className="fixed inset-0 bg-ink/60 backdrop-blur-xs transition-opacity animate-fadeIn"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Slide-over panel */}
+          <div
+            className="relative w-[85vw] max-w-xs bg-surface h-full shadow-2xl flex flex-col z-10 animate-slideRight overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between pb-3 border-b border-border">
-                <span className="title-3 font-semibold text-ink">Store Navigation</span>
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-border bg-surface-alt flex-shrink-0">
+              <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 group flex-shrink-0 min-w-0"
+              >
+                <img
+                  src={logoIcon}
+                  alt="QuantumTech Logo"
+                  className="h-7 w-7 object-contain flex-shrink-0 group-hover:scale-105 transition-transform"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-base font-bold tracking-tight text-ink leading-none whitespace-nowrap">
+                    Quantum<span className="text-quantum">Tech</span>
+                  </span>
+                  <span className="caption-5 text-muted mt-0.5">
+                    {language === 'bn' ? 'স্মার্ট এক্সেসরিজ' : 'Modern Accessories'}
+                  </span>
+                </div>
+              </Link>
+
+              <div className="flex items-center gap-2">
+                {/* Language Switcher inside Drawer */}
                 <button
                   type="button"
+                  onClick={toggleLanguage}
+                  className="flex items-center justify-center px-2 py-1 rounded-lg border border-border bg-surface text-xs font-semibold text-ink hover:bg-surface-muted transition-colors"
+                  aria-label={`Switch language: ${language === 'en' ? 'Bangla' : 'English'}`}
+                >
+                  <span className={language === 'en' ? 'text-quantum font-bold' : 'text-muted'}>EN</span>
+                  <span className="text-border-dark mx-0.5">/</span>
+                  <span className={language === 'bn' ? 'text-quantum font-bold' : 'text-muted'}>বাং</span>
+                </button>
+
+                <button
+                  type="button"
+                  data-testid="mobile-drawer-close"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex h-9 w-9 items-center justify-center text-muted hover:text-ink rounded-lg"
+                  className="flex h-9 w-9 items-center justify-center text-muted hover:text-ink hover:bg-surface rounded-lg transition-colors"
                   aria-label="Close menu"
                 >
                   <FontAwesomeIcon icon={Icons.close} className="h-4 w-4" />
                 </button>
               </div>
+            </div>
 
+            {/* Quick Search inside Drawer */}
+            <div className="p-3 border-b border-border bg-surface flex-shrink-0">
+              <SearchBar autoFocus={false} onSearch={() => setMobileMenuOpen(false)} />
+            </div>
+
+            {/* Scrollable Nav Links & Categories */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
               {/* Main Nav Links */}
               <div className="flex flex-col gap-1">
                 <NavLink
                   to="/"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive ? 'bg-quantum text-white font-semibold' : 'text-ink hover:bg-surface-alt'
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-quantum text-white font-semibold shadow-xs'
+                        : 'text-ink hover:bg-surface-muted hover:text-quantum'
                     }`
                   }
                 >
@@ -358,8 +436,10 @@ export const Header: React.FC = () => {
                   to="/shop"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive ? 'bg-quantum text-white font-semibold' : 'text-ink hover:bg-surface-alt'
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-quantum text-white font-semibold shadow-xs'
+                        : 'text-ink hover:bg-surface-muted hover:text-quantum'
                     }`
                   }
                 >
@@ -371,8 +451,10 @@ export const Header: React.FC = () => {
                   to="/cart"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive ? 'bg-quantum text-white font-semibold' : 'text-ink hover:bg-surface-alt'
+                    `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-quantum text-white font-semibold shadow-xs'
+                        : 'text-ink hover:bg-surface-muted hover:text-quantum'
                     }`
                   }
                 >
@@ -381,7 +463,7 @@ export const Header: React.FC = () => {
                     <span>{t.cart.title || 'Your Cart'}</span>
                   </div>
                   {totalCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-quantum-soft text-quantum font-bold text-xs">
+                    <span className="px-2 py-0.5 rounded-full bg-quantum text-white text-xs font-bold shadow-xs">
                       {totalCount}
                     </span>
                   )}
@@ -391,8 +473,10 @@ export const Header: React.FC = () => {
                   to="/track-order"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive ? 'bg-quantum text-white font-semibold' : 'text-ink hover:bg-surface-alt'
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-quantum text-white font-semibold shadow-xs'
+                        : 'text-ink hover:bg-surface-muted hover:text-quantum'
                     }`
                   }
                 >
@@ -404,8 +488,10 @@ export const Header: React.FC = () => {
                   to="/about"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive ? 'bg-quantum text-white font-semibold' : 'text-ink hover:bg-surface-alt'
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-quantum text-white font-semibold shadow-xs'
+                        : 'text-ink hover:bg-surface-muted hover:text-quantum'
                     }`
                   }
                 >
@@ -417,8 +503,10 @@ export const Header: React.FC = () => {
                   to="/contact"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive ? 'bg-quantum text-white font-semibold' : 'text-ink hover:bg-surface-alt'
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-quantum text-white font-semibold shadow-xs'
+                        : 'text-ink hover:bg-surface-muted hover:text-quantum'
                     }`
                   }
                 >
@@ -430,8 +518,10 @@ export const Header: React.FC = () => {
                   to="/policies"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive ? 'bg-quantum text-white font-semibold' : 'text-ink hover:bg-surface-alt'
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-quantum text-white font-semibold shadow-xs'
+                        : 'text-ink hover:bg-surface-muted hover:text-quantum'
                     }`
                   }
                 >
@@ -443,30 +533,43 @@ export const Header: React.FC = () => {
                   to="/admin"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
-                      isActive ? 'bg-quantum text-white font-semibold' : 'text-ink hover:bg-surface-alt'
+                    `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-quantum text-white font-semibold shadow-xs'
+                        : 'text-ink hover:bg-surface-muted hover:text-quantum'
                     }`
                   }
                 >
-                  <FontAwesomeIcon icon={Icons.dashboard} className="h-4 w-4" />
-                  <span>{t.nav.admin}</span>
+                  <FontAwesomeIcon icon={Icons.dashboard} className="h-4 w-4 text-quantum" />
+                  <span className="font-semibold text-quantum">{t.nav.admin}</span>
                 </NavLink>
               </div>
 
               {/* Categories Section in Drawer */}
               <div className="pt-3 border-t border-border">
-                <span className="caption-4 uppercase font-semibold text-muted tracking-wider block mb-2 px-1">
-                  {t.catalog.categories}
-                </span>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <span className="caption-4 uppercase font-bold text-muted tracking-wider">
+                    {t.catalog.categories}
+                  </span>
+                  <Link
+                    to="/shop"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="caption-5 font-bold text-quantum hover:underline"
+                  >
+                    {t.catalog.viewAll}
+                  </Link>
+                </div>
                 <div className="flex flex-col gap-1">
                   {categories.map((cat) => (
                     <Link
                       key={cat.id}
                       to={`/category/${cat.slug}`}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-ink hover:bg-quantum-soft hover:text-quantum"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-ink hover:bg-quantum-soft hover:text-quantum transition-colors group"
                     >
-                      <FontAwesomeIcon icon={getCatIcon(cat.iconName)} className="h-3 w-3 text-muted" />
+                      <div className="flex h-6 w-6 items-center justify-center rounded bg-surface-alt border border-border text-muted group-hover:text-quantum group-hover:border-quantum/30">
+                        <FontAwesomeIcon icon={getCatIcon(cat.iconName)} className="h-3 w-3" />
+                      </div>
                       <span>{language === 'bn' ? cat.nameBn : cat.nameEn}</span>
                     </Link>
                   ))}
@@ -475,19 +578,34 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Bottom Support Callouts */}
-            <div className="pt-4 border-t border-border flex flex-col gap-1.5 text-xs">
-              <a
-                href="tel:01712345678"
-                className="flex items-center gap-2 text-ink hover:text-quantum font-semibold py-1"
-              >
-                <FontAwesomeIcon icon={Icons.phone} className="text-quantum h-3.5 w-3.5" />
-                <span>01712-345678</span>
-              </a>
-              <span className="caption-5 text-muted">Everyday: 10:00 AM - 10:00 PM</span>
+            <div className="p-4 border-t border-border bg-surface-alt flex flex-col gap-2 flex-shrink-0">
+              <div className="flex items-center justify-between text-xs font-semibold text-ink">
+                <span>{language === 'bn' ? 'সাপোর্ট হটলাইন' : 'Customer Support'}</span>
+                <span className="caption-5 text-muted">10 AM - 10 PM</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="tel:01712345678"
+                  className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-surface border border-border text-ink hover:text-quantum hover:border-quantum/30 text-xs font-bold shadow-xs transition-colors"
+                >
+                  <FontAwesomeIcon icon={Icons.phone} className="text-quantum h-3.5 w-3.5" />
+                  <span>01712-345678</span>
+                </a>
+                <a
+                  href="https://wa.me/8801712345678"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center h-9 w-9 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors shadow-xs"
+                  title="WhatsApp Support"
+                >
+                  <FontAwesomeIcon icon={Icons.whatsapp} className="h-4 w-4" />
+                </a>
+              </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </header>
+    </>
   );
 };

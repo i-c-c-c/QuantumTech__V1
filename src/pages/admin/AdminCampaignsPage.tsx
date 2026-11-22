@@ -5,6 +5,7 @@ import { promotionService } from '../../services/promotionService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 import { Icons } from '../../utilities/icons';
+import { ImageUploadInput } from '../../components/ImageUploadInput';
 
 const BANNER_POSITIONS: { label: string; value: Campaign['bannerPosition'] }[] = [
   { label: 'Featured Festival Section (Homepage)', value: 'featured' },
@@ -495,39 +496,33 @@ export const AdminCampaignsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="font-semibold text-ink block mb-1">Campaign Image URL *</label>
-                <input
-                  type="url"
-                  required
-                  value={campaignImage}
-                  onChange={(e) => setCampaignImage(e.target.value)}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full rounded-xl border border-border px-3 py-2 text-ink focus:border-quantum focus:outline-none"
-                />
-              </div>
+              <ImageUploadInput
+                label="Campaign Primary Image"
+                required
+                value={campaignImage}
+                onChange={setCampaignImage}
+                placeholder="https://images.unsplash.com/photo-..."
+                helperText="Upload or drag campaign banner photo (auto-compressed)"
+                aspectRatio="banner"
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold text-ink block mb-1">Desktop Banner URL (Optional)</label>
-                  <input
-                    type="url"
-                    value={desktopBanner}
-                    onChange={(e) => setDesktopBanner(e.target.value)}
-                    placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full rounded-xl border border-border px-3 py-2 text-ink focus:border-quantum focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-ink block mb-1">Mobile Banner URL (Optional)</label>
-                  <input
-                    type="url"
-                    value={mobileBanner}
-                    onChange={(e) => setMobileBanner(e.target.value)}
-                    placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full rounded-xl border border-border px-3 py-2 text-ink focus:border-quantum focus:outline-none"
-                  />
-                </div>
+                <ImageUploadInput
+                  label="Desktop Banner Image (Optional)"
+                  value={desktopBanner}
+                  onChange={setDesktopBanner}
+                  placeholder="https://images.unsplash.com/photo-..."
+                  helperText="Wide aspect banner for desktop screens"
+                  aspectRatio="banner"
+                />
+                <ImageUploadInput
+                  label="Mobile Banner Image (Optional)"
+                  value={mobileBanner}
+                  onChange={setMobileBanner}
+                  placeholder="https://images.unsplash.com/photo-..."
+                  helperText="Compact banner optimized for mobile view"
+                  aspectRatio="video"
+                />
               </div>
 
               <div className="flex items-center gap-3 pt-2">

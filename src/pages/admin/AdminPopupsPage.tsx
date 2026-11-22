@@ -4,6 +4,7 @@ import { PromotionalPopup, PopupLayoutType, PopupTriggerType, PopupFrequencyType
 import { promotionService } from '../../services/promotionService';
 import { useToast } from '../../context/ToastContext';
 import { Icons } from '../../utilities/icons';
+import { ImageUploadInput } from '../../components/ImageUploadInput';
 
 const LAYOUTS: { label: string; value: PopupLayoutType; description: string }[] = [
   { label: 'Image with Text & CTA', value: 'image_text', description: 'Top image, bold headline, text, button' },
@@ -403,16 +404,14 @@ export const AdminPopupsPage: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="font-semibold text-ink block mb-1">Banner Image URL</label>
-                  <input
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full rounded-xl border border-border px-3 py-2 text-ink focus:border-quantum focus:outline-none"
-                  />
-                </div>
+                <ImageUploadInput
+                  label="Popup / Offer Banner Image"
+                  value={imageUrl}
+                  onChange={setImageUrl}
+                  placeholder="https://images.unsplash.com/photo-..."
+                  helperText="Upload or paste popup creative (auto-compressed for fast loading)"
+                  aspectRatio="banner"
+                />
 
                 {/* Action CTA */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
