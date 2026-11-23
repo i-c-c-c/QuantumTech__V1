@@ -65,7 +65,8 @@
 
 .dark,
 .dark body {
-  color: #FFFFFF;
+  background-color: #181818 !important;
+  color: #FFFFFF !important;
 }
 
 .dark .text-ink {
@@ -74,6 +75,26 @@
 
 .dark .text-muted {
   color: #9B9B9B !important;
+}
+
+.dark .bg-surface {
+  background-color: #1F1F1F !important;
+}
+
+.dark .bg-surface-alt {
+  background-color: #181818 !important;
+}
+
+.dark .bg-surface-muted {
+  background-color: #272727 !important;
+}
+
+.dark .border-border {
+  border-color: #313131 !important;
+}
+
+.dark .border-border-dark {
+  border-color: #272727 !important;
 }
 
 @layer base {
