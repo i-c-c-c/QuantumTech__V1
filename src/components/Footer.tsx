@@ -83,7 +83,7 @@ export const Footer: React.FC = () => {
           {/* Brand Introduction (Col 1-4) */}
           <div className="lg:col-span-4 flex flex-col gap-4">
             <Link to="/" className="flex items-center gap-2.5">
-              <img src={logoIcon} alt="QuantumTech" className="h-8 w-8 object-contain" />
+              <img src={logoIcon} alt="QuantumTech" className="h-9 w-9 sm:h-10 sm:w-10 object-contain flex-shrink-0" />
               <span className="text-xl font-bold tracking-tight text-white">
                 Quantum<span className="text-quantum">Tech</span>
               </span>

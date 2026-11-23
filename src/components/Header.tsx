@@ -130,11 +130,11 @@ export const Header: React.FC = () => {
             </button>
 
             {/* Brand Logo & Name */}
-            <Link to="/" className="flex items-center gap-1 sm:gap-2 group flex-shrink-0 min-w-0">
+            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group flex-shrink-0 min-w-0">
               <img
                 src={logoIcon}
                 alt="QuantumTech Logo"
-                className="h-6 w-6 sm:h-8 sm:w-8 object-contain flex-shrink-0 group-hover:scale-105 transition-transform"
+                className="h-7 w-7 sm:h-9 sm:w-9 md:h-10 md:w-10 object-contain flex-shrink-0 group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
                 <span className="text-sm sm:text-lg font-bold tracking-tight text-ink leading-none">
@@ -378,7 +378,7 @@ export const Header: React.FC = () => {
                 <img
                   src={logoIcon}
                   alt="QuantumTech Logo"
-                  className="h-7 w-7 object-contain flex-shrink-0 group-hover:scale-105 transition-transform"
+                  className="h-8 w-8 object-contain flex-shrink-0 group-hover:scale-105 transition-transform"
                 />
                 <div className="flex flex-col min-w-0">
                   <span className="text-base font-bold tracking-tight text-ink leading-none whitespace-nowrap">

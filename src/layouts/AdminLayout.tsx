@@ -54,8 +54,8 @@ export const AdminLayout: React.FC = () => {
           >
             <FontAwesomeIcon icon={sidebarOpen ? Icons.close : Icons.menu} className="h-4.5 w-4.5" />
           </button>
-          <Link to="/admin/dashboard" className="flex items-center gap-1.5">
-            <img src={logoIcon} alt="QuantumTech" className="h-6 w-6 object-contain" />
+          <Link to="/admin/dashboard" className="flex items-center gap-2">
+            <img src={logoIcon} alt="QuantumTech" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
             <span className="text-sm sm:title-3 font-bold text-white tracking-tight">QuantumTech</span>
           </Link>
         </div>
@@ -119,7 +119,7 @@ export const AdminLayout: React.FC = () => {
               sidebarCollapsed ? 'justify-center w-full' : ''
             }`}
           >
-            <img src={logoIcon} alt="QuantumTech" className="h-8 w-8 object-contain flex-shrink-0" />
+            <img src={logoIcon} alt="QuantumTech" className="h-9 w-9 sm:h-10 sm:w-10 object-contain flex-shrink-0" />
             {!sidebarCollapsed && (
               <div className="flex flex-col">
                 <span className="heading-6 font-bold text-white tracking-tight leading-none">
