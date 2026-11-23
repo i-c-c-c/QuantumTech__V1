@@ -23,6 +23,21 @@ This backend implements Sifat's assigned backend/admin work for the QuantumTech 
 MongoDB Atlas data storage, Spring Security JWT authentication, product/category/order/review
 management, stock safety, payment verification, email notifications, and Cloudinary uploads.
 
+**Tahsan Mohammad (Checkout, Payment & QA)** implemented and owns:
+
+- Cart validation and server-side pricing (`POST /api/cart/validate`)
+- Guest checkout hardening: atomic stock reservation with rollback, idempotency, price-change
+  detection, daily order numbering, strict request validation
+- COD, bKash and Nagad payment workflows: payment method catalogue with EN/BN instructions,
+  verification rules, customer TrxID resubmission, refund tracking
+- Order confirmation and customer-safe order tracking (`steps` + `timeline`)
+- Integration tests on a real embedded MongoDB, QA test plan, bug report and Postman collection
+
+Start here: **[Work summary, setup and full flows](docs/TAHSAN_WORK_SUMMARY.md)** ·
+[Checkout & payment integration guide](docs/checkout-payment-integration.md) ·
+[QA test plan](docs/qa/TEST_PLAN.md) · [QA bug report](docs/qa/BUG_REPORT.md) ·
+[Postman collection](docs/qa/QuantumTech-Checkout.postman_collection.json)
+
 ## Stack
 
 - Java 21
@@ -36,13 +51,15 @@ management, stock safety, payment verification, email notifications, and Cloudin
 
 ## Run locally
 
+Requires JDK 21+ and Maven 3.9+.
+
 ```bash
-cd backend
-cp .env.example .env
-/tmp/apache-maven-3.9.9/bin/mvn spring-boot:run
+cp .env.example .env      # fill in values, then export them (Spring Boot does not read .env itself)
+mvn spring-boot:run
 ```
 
-Set environment variables in `.env` or your terminal. MongoDB defaults to a local database:
+Set the variables from `.env.example` as environment variables (terminal, IDE run
+configuration or hosting dashboard). MongoDB defaults to a local database:
 
 ```properties
 MONGODB_URI=mongodb://localhost:27017/qtechdb
@@ -113,16 +130,21 @@ Variants are nested under `variants`. Parent stock is recalculated from variant 
 
 Deleting a category with non-deleted products returns `409 Conflict`.
 
-### Orders
+### Cart, checkout, payment and tracking
+
+Full contract, UI states and error codes: [docs/checkout-payment-integration.md](docs/checkout-payment-integration.md).
 
 | Method | Endpoint | Access |
 |---|---|---|
-| POST | `/api/orders` | Public |
-| GET | `/api/orders/track?orderNumber=...&phone=...` | Public |
-| GET | `/api/admin/orders` | Admin |
+| POST | `/api/cart/validate` | Public: server-priced cart, stock issues, delivery charge, total |
+| GET | `/api/payments/methods` | Public: COD/bKash/Nagad availability, receiving numbers, EN/BN steps |
+| POST | `/api/orders` | Public guest checkout, returns the order confirmation |
+| GET | `/api/orders/track?orderNumber=...&phone=...` | Public, 10 lookups / 15 min per IP |
+| POST | `/api/orders/{orderNumber}/payment` | Public: customer resubmits bKash/Nagad TrxID |
+| GET | `/api/admin/orders?status=&paymentMethod=&paymentStatus=&search=` | Admin |
 | GET | `/api/admin/orders/{id}` | Admin |
 | PATCH | `/api/admin/orders/{id}/status` | Admin |
-| PATCH | `/api/admin/orders/{id}/payment` | Admin |
+| PATCH | `/api/admin/orders/{id}/payment` | Admin: `Verified`, `Failed`, `Refunded` |
 | GET | `/api/admin/dashboard` | Admin |
 
 Checkout body:
@@ -134,12 +156,10 @@ Checkout body:
   "area": "Inside Dhaka",
   "address": "House 12, Road 5, Dhanmondi",
   "note": "Call before delivery",
-  "deliveryCharge": 70,
   "paymentMethod": "bKash",
   "trxId": "9K8J7H6G5F",
   "senderNumber": "01712345678",
-  "couponCode": null,
-  "couponDiscount": 0,
+  "total": 1570,
   "source": "Facebook",
   "language": "en",
   "items": [
@@ -152,8 +172,12 @@ Checkout body:
 }
 ```
 
-Send `X-Idempotency-Key: UNIQUE_VALUE` on checkout to protect repeated submissions.
-The backend rechecks product availability, stock, price, delivery charge, and TrxID uniqueness.
+Send `X-Idempotency-Key: <uuid per checkout attempt>`: repeating it returns the same order.
+The backend reprices everything server-side (client `subtotal`, `deliveryCharge` and
+`couponDiscount` are ignored), reserves stock atomically and rolls back on failure.
+If `total` is sent and no longer matches, checkout returns `409 PRICE_CHANGED` with the fresh cart.
+Coupons are not supported yet (`400 COUPON_INVALID`). Order numbers are `QT-yyMMdd-NNNN`
+(Bangladesh date, daily sequence).
 
 Status changes:
 
@@ -161,14 +185,24 @@ Status changes:
 {"status":"Shipped","note":"Handed to courier"}
 ```
 
-Allowed: `Pending -> Confirmed -> Shipped -> Delivered` and cancellation from Pending,
-Confirmed or Shipped. bKash/Nagad requires `paymentStatus=Verified` before confirmation.
+Allowed: `Pending -> Confirmed -> Shipped -> Delivered` and cancellation (reason required) from
+Pending, Confirmed or Shipped. Cancellation restores stock. bKash/Nagad requires
+`paymentStatus=Verified` before confirmation.
+
+Payment status lifecycle:
+
+| Method | Lifecycle |
+|---|---|
+| COD | `Pending collection` → `Collected` (Delivered) or `Cancelled` (order cancelled) |
+| bKash / Nagad | `Verification pending` → `Verified` or `Failed` (admin, order Pending) · `Failed` → `Verification pending` (customer resubmits) · `Verified` → `Refund pending` (order cancelled) → `Refunded` (admin) |
 
 Payment verification:
 
 ```json
 {"status":"Verified","note":"Statement matched"}
 ```
+
+bKash/Nagad are offered only after the admin sets `bKashNumber` / `nagadNumber` in Store Settings.
 
 ### Reviews
 
@@ -206,14 +240,21 @@ Validation and business-rule failures use JSON:
 {"timestamp":"2026-11-22T00:00:00Z","status":400,"error":"Error message"}
 ```
 
-For field validation, `fields` contains invalid field names and messages.
+For field validation, `fields` contains invalid field names and messages. Checkout and
+payment errors also carry a machine-readable `code` (e.g. `CART_INVALID`, `PRICE_CHANGED`,
+`OUT_OF_STOCK`, `TRXID_USED`, `PAYMENT_METHOD_UNAVAILABLE`, `RATE_LIMITED`) and, for cart
+problems, a refreshed `cart`.
 
 ## Tests
 
 ```bash
-mvn test
+mvn test      # unit tests (fast, no database)
+mvn verify    # unit + integration tests (*IT) against an embedded MongoDB 7
 ```
 
-The suite currently covers product price/variant stock rules, public filtering,
-order status transitions, mobile payment verification, cancellation validation,
-and pending review creation.
+The first `mvn verify` downloads a MongoDB binary into `~/.embedmongo` (no Docker needed).
+Unit tests cover product price/variant stock rules, public filtering, reviews, cart pricing,
+checkout (pricing, tampering, rollback, idempotency, numbering), order status transitions,
+payment verification/resubmission/refunds, tracking and rate limiting. Integration tests
+(`CheckoutFlowIT`) run the full COD and bKash flows over HTTP, including a concurrency test that
+proves the last units cannot be oversold. Test case IDs: [docs/qa/TEST_PLAN.md](docs/qa/TEST_PLAN.md).
