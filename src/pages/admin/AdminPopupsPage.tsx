@@ -198,12 +198,12 @@ export const AdminPopupsPage: React.FC = () => {
       </div>
 
       {/* Safety Notice Banner */}
-      <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center gap-3">
-        <FontAwesomeIcon icon={Icons.shield} className="h-4 w-4 text-quantum flex-shrink-0" />
+      <div className="p-4 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs text-blue-950 dark:text-blue-100 flex items-center gap-3">
+        <FontAwesomeIcon icon={Icons.shield} className="h-4 w-4 text-quantum dark:text-sky-400 flex-shrink-0" />
         <div>
           <span className="font-bold">E-Commerce Protection Active:</span> Popups are automatically suppressed on
-          sensitive paths (<code className="font-mono bg-blue-100 px-1 py-0.5 rounded">/checkout</code> and{' '}
-          <code className="font-mono bg-blue-100 px-1 py-0.5 rounded">/order-confirmation</code>) to ensure seamless
+          sensitive paths (<code className="font-mono bg-blue-100/90 dark:bg-blue-900/60 text-blue-900 dark:text-sky-300 border border-blue-200 dark:border-blue-700/50 px-1.5 py-0.5 rounded font-semibold">/checkout</code> and{' '}
+          <code className="font-mono bg-blue-100/90 dark:bg-blue-900/60 text-blue-900 dark:text-sky-300 border border-blue-200 dark:border-blue-700/50 px-1.5 py-0.5 rounded font-semibold">/order-confirmation</code>) to ensure seamless
           conversions. Only one popup will ever display at a time (highest priority wins).
         </div>
       </div>

@@ -28,48 +28,48 @@ export const Footer: React.FC = () => {
   const whatsappUrl = `https://wa.me/${storeSettings.whatsappNumber.replace(/[^0-9]/g, '')}`;
 
   return (
-    <footer className="bg-ink dark:bg-[#131209] text-slate-300 border-t border-slate-800 dark:border-border mt-0">
+    <footer className="bg-ink dark:bg-[#121212] text-slate-300 border-t border-slate-800 dark:border-border mt-0">
       {/* Trust & Guarantee Highlights Bar */}
-      <div className="border-b border-slate-800 dark:border-border py-6 sm:py-8 bg-slate-900/40 dark:bg-[#181818]">
+      <div className="border-b border-slate-800 dark:border-border py-6 sm:py-8 bg-slate-900/50 dark:bg-[#181818]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-quantum/15 text-quantum-soft flex-shrink-0">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-quantum/15 dark:bg-quantum/25 text-quantum dark:text-sky-400 border border-quantum/20 dark:border-quantum/40 flex-shrink-0 shadow-xs">
                 <FontAwesomeIcon icon={Icons.cod} className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h4 className="title-4 text-white font-semibold text-xs sm:text-sm">{t.trust.codTitle}</h4>
-                <p className="caption-4 text-slate-400 mt-0.5 line-clamp-1">{t.trust.codDesc}</p>
+                <p className="caption-4 text-slate-400 dark:text-slate-300 mt-0.5 leading-relaxed">{t.trust.codDesc}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-quantum/15 text-quantum-soft flex-shrink-0">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-quantum/15 dark:bg-quantum/25 text-quantum dark:text-sky-400 border border-quantum/20 dark:border-quantum/40 flex-shrink-0 shadow-xs">
                 <FontAwesomeIcon icon={Icons.delivery} className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h4 className="title-4 text-white font-semibold text-xs sm:text-sm">{t.trust.deliveryTitle}</h4>
-                <p className="caption-4 text-slate-400 mt-0.5 line-clamp-1">{t.trust.deliveryDesc}</p>
+                <p className="caption-4 text-slate-400 dark:text-slate-300 mt-0.5 leading-relaxed">{t.trust.deliveryDesc}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-quantum/15 text-quantum-soft flex-shrink-0">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-quantum/15 dark:bg-quantum/25 text-quantum dark:text-sky-400 border border-quantum/20 dark:border-quantum/40 flex-shrink-0 shadow-xs">
                 <FontAwesomeIcon icon={Icons.returns} className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h4 className="title-4 text-white font-semibold text-xs sm:text-sm">{t.trust.returnsTitle}</h4>
-                <p className="caption-4 text-slate-400 mt-0.5 line-clamp-1">{t.trust.returnsDesc}</p>
+                <p className="caption-4 text-slate-400 dark:text-slate-300 mt-0.5 leading-relaxed">{t.trust.returnsDesc}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-quantum/15 text-quantum-soft flex-shrink-0">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-quantum/15 dark:bg-quantum/25 text-quantum dark:text-sky-400 border border-quantum/20 dark:border-quantum/40 flex-shrink-0 shadow-xs">
                 <FontAwesomeIcon icon={Icons.shield} className="h-5 w-5" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h4 className="title-4 text-white font-semibold text-xs sm:text-sm">{t.trust.verifiedTitle}</h4>
-                <p className="caption-4 text-slate-400 mt-0.5 line-clamp-1">{t.trust.verifiedDesc}</p>
+                <p className="caption-4 text-slate-400 dark:text-slate-300 mt-0.5 leading-relaxed">{t.trust.verifiedDesc}</p>
               </div>
             </div>
           </div>

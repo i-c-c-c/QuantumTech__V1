@@ -98,13 +98,13 @@ export const AdminReviewsPage: React.FC = () => {
 
         <div className="flex items-center gap-2.5 self-start sm:self-auto">
           {pendingCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 shadow-2xs">
-              <FontAwesomeIcon icon={Icons.reviews} className="h-3.5 w-3.5 text-amber-600" />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 shadow-2xs">
+              <FontAwesomeIcon icon={Icons.reviews} className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
               <span className="caption-3 font-bold">{pendingCount} Awaiting Moderation</span>
             </div>
           )}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 shadow-2xs">
-            <FontAwesomeIcon icon={Icons.check} className="h-3.5 w-3.5 text-emerald-600" />
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 shadow-2xs">
+            <FontAwesomeIcon icon={Icons.check} className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             <span className="caption-3 font-bold">{approvedCount} Published</span>
           </div>
         </div>

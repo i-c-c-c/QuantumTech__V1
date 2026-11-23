@@ -86,23 +86,23 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* Orders Older Than 24h Alert Banner (SRS FR-25) */}
       {ordersOlderThan24h.length > 0 && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fadeIn">
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-amber-950 dark:text-amber-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fadeIn">
           <div className="flex items-start gap-3.5">
-            <div className="h-10 w-10 rounded-xl bg-amber-200 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="h-10 w-10 rounded-xl bg-amber-200 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center flex-shrink-0 mt-0.5">
               <FontAwesomeIcon icon={Icons.warning} className="h-5 w-5" />
             </div>
             <div>
-              <span className="title-3 font-bold block text-amber-900">
+              <span className="title-3 font-bold block text-amber-900 dark:text-amber-200">
                 {t.admin.dashboard.alertPending24h.replace('{{count}}', formatNumber(ordersOlderThan24h.length, language))}
               </span>
-              <p className="caption-3 text-amber-800 mt-0.5 leading-relaxed">
+              <p className="caption-3 text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
                 {language === 'bn' 
                   ? 'স্টোর পলিসি অনুযায়ী ২৪ ঘণ্টার মধ্যে অর্ডার নিশ্চিত করা আবশ্যক। নিচের অপেক্ষমাণ অর্ডারগুলো দ্রুত যাচাই করুন:'
                   : 'Per store fulfillment policy, orders should be confirmed within 24 hours. The following order(s) require prompt call confirmation:'}
               </p>
               <div className="flex flex-wrap gap-2 mt-2">
                 {ordersOlderThan24h.map(o => (
-                  <span key={o.id} className="caption-4 px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 font-mono font-bold border border-amber-300">
+                  <span key={o.id} className="caption-4 px-2.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-200 font-mono font-bold border border-amber-300 dark:border-amber-700/50">
                     {o.orderNumber} ({o.customerName})
                   </span>
                 ))}

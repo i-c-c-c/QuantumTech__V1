@@ -97,6 +97,16 @@
   border-color: #272727 !important;
 }
 
+.dark .text-quantum-soft {
+  color: #93C5FD !important;
+}
+
+.dark code {
+  background-color: rgba(30, 58, 138, 0.45) !important;
+  color: #93C5FD !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+}
+
 @layer base {
   * {
     font-style: normal !important; /* Skill rule: Never use italic fonts anywhere */
