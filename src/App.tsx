@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { ScrollToTop } from './components/ScrollToTop';
+import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
@@ -9,15 +11,18 @@ import { AppRoutes } from './routes';
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <LanguageProvider>
-        <ToastProvider>
-          <CartProvider>
-            <AdminAuthProvider>
-              <AppRoutes />
-            </AdminAuthProvider>
-          </CartProvider>
-        </ToastProvider>
-      </LanguageProvider>
+      <ScrollToTop />
+      <ThemeProvider>
+        <LanguageProvider>
+          <ToastProvider>
+            <CartProvider>
+              <AdminAuthProvider>
+                <AppRoutes />
+              </AdminAuthProvider>
+            </CartProvider>
+          </ToastProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 };

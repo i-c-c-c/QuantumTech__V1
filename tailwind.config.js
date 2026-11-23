@@ -1,5 +1,10 @@
 /** @type {import('tailwindcss').Config} */
+function withAlpha(varName) {
+  return `rgb(var(${varName}) / <alpha-value>)`;
+}
+
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -8,7 +13,7 @@ export default {
     extend: {
       colors: {
         ink: {
-          DEFAULT: '#0F172A',
+          DEFAULT: withAlpha('--color-ink'),
           light: '#1E293B',
           dark: '#020617',
         },
@@ -16,23 +21,23 @@ export default {
           DEFAULT: '#2563EB',
           hover: '#1D4ED8',
           active: '#1E40AF',
-          soft: '#EFF6FF',
+          soft: withAlpha('--color-quantum-soft'),
           dark: '#0B132B',
         },
         surface: {
-          DEFAULT: '#FFFFFF',
-          alt: '#F8FAFC',
-          muted: '#F1F5F9',
+          DEFAULT: withAlpha('--color-surface'),
+          alt: withAlpha('--color-surface-alt'),
+          muted: withAlpha('--color-surface-muted'),
         },
         border: {
-          DEFAULT: '#E2E8F0',
+          DEFAULT: withAlpha('--color-border'),
           focus: '#93C5FD',
-          dark: '#CBD5E1',
+          dark: withAlpha('--color-border-dark'),
         },
         muted: {
-          DEFAULT: '#64748B',
-          light: '#94A3B8',
-          dark: '#475569',
+          DEFAULT: withAlpha('--color-muted'),
+          light: withAlpha('--color-muted-light'),
+          dark: withAlpha('--color-muted-dark'),
         },
         success: {
           DEFAULT: '#16A34A',

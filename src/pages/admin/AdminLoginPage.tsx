@@ -6,6 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { Icons } from '../../utilities/icons';
 import logoIcon from '../../assets/brand/logo-icon.png';
 import { ToastContainer } from '../../components/Toast';
+import { ThemeToggle } from '../../components/ThemeToggle';
 
 export const AdminLoginPage: React.FC = () => {
   const { isAuthenticated, login, isLocked, lockTimeRemaining, rememberedEmail } = useAdminAuth();
@@ -64,16 +65,28 @@ export const AdminLoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-ink flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-float">
-        {/* Language Switcher */}
-        <div className="flex justify-end mb-2">
-          <button
-            type="button"
-            onClick={() => setLanguage(language === 'en' ? 'bn' : 'en')}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-surface-alt hover:bg-surface-muted text-xs font-semibold text-ink transition-colors"
+        {/* Top Controls: Theme & Language */}
+        <div className="flex items-center justify-between mb-4">
+          <Link
+            to="/"
+            className="caption-4 text-muted hover:text-quantum flex items-center gap-1.5 transition-colors"
           >
-            <FontAwesomeIcon icon={Icons.language} className="h-3 w-3 text-quantum" />
-            <span>{language === 'en' ? 'বাংলা' : 'English'}</span>
-          </button>
+            <FontAwesomeIcon icon={Icons.chevronLeft} className="h-3 w-3" />
+            <span>{language === 'bn' ? 'স্টোরে ফিরে যান' : 'Back to Store'}</span>
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle variant="icon" className="h-8 w-8 min-h-[32px] min-w-[32px]" />
+
+            <button
+              type="button"
+              onClick={() => setLanguage(language === 'en' ? 'bn' : 'en')}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-surface-alt hover:bg-surface-muted text-xs font-semibold text-ink transition-colors"
+            >
+              <FontAwesomeIcon icon={Icons.language} className="h-3 w-3 text-quantum" />
+              <span>{language === 'en' ? 'বাংলা' : 'English'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Brand Header */}

@@ -28,9 +28,9 @@ export const Footer: React.FC = () => {
   const whatsappUrl = `https://wa.me/${storeSettings.whatsappNumber.replace(/[^0-9]/g, '')}`;
 
   return (
-    <footer className="bg-ink text-slate-300 border-t border-slate-800 mt-16 sm:mt-24">
+    <footer className="bg-ink dark:bg-[#131209] text-slate-300 border-t border-slate-800 dark:border-border mt-0">
       {/* Trust & Guarantee Highlights Bar */}
-      <div className="border-b border-slate-800 py-6 sm:py-8 bg-slate-900/40">
+      <div className="border-b border-slate-800 dark:border-border py-6 sm:py-8 bg-slate-900/40 dark:bg-[#181818]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             <div className="flex items-center gap-3">

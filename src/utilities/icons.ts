@@ -72,7 +72,9 @@ import {
   faFire,
   faGift,
   faWindowMaximize,
-  faPenToSquare
+  faPenToSquare,
+  faSun,
+  faMoon
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -115,6 +117,8 @@ export const Icons = {
   info: faCircleInfo,
   language: faLanguage,
   globe: faGlobe,
+  sun: faSun,
+  moon: faMoon,
   send: faPaperPlane,
   wallet: faWallet,
   camera: faCamera,

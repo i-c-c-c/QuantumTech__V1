@@ -8,6 +8,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Icons } from '../utilities/icons';
 import { categoryService } from '../services/categoryService';
 import logoIcon from '../assets/brand/logo-icon.png';
+import { ThemeToggle } from './ThemeToggle';
 
 export const Header: React.FC = () => {
   const location = useLocation();
@@ -108,35 +109,35 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Main Header Container */}
-      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 gap-1 sm:gap-4">
           
           {/* Left: Mobile Toggle & Brand Logo */}
           <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-            {/* Mobile Menu Button (44px min touch target) */}
+            {/* Mobile Menu Button */}
             <button
               type="button"
               data-testid="mobile-menu-toggle"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-ink hover:bg-surface-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum"
+              className="lg:hidden flex h-10 w-10 sm:h-11 sm:w-11 min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-ink hover:bg-surface-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum"
               aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               aria-expanded={mobileMenuOpen}
             >
               <FontAwesomeIcon
                 icon={mobileMenuOpen ? Icons.close : Icons.menu}
-                className="h-4.5 w-4.5"
+                className="h-4 w-4 sm:h-4.5 sm:w-4.5"
               />
             </button>
 
             {/* Brand Logo & Name */}
-            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group flex-shrink-0 min-w-0">
+            <Link to="/" className="flex items-center gap-1 sm:gap-2 group flex-shrink-0 min-w-0">
               <img
                 src={logoIcon}
                 alt="QuantumTech Logo"
-                className="h-7 w-7 sm:h-8 sm:w-8 object-contain flex-shrink-0 group-hover:scale-105 transition-transform"
+                className="h-6 w-6 sm:h-8 sm:w-8 object-contain flex-shrink-0 group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
-                <span className="text-base sm:text-lg font-bold tracking-tight text-ink leading-none">
+                <span className="text-sm sm:text-lg font-bold tracking-tight text-ink leading-none">
                   Quantum<span className="text-quantum">Tech</span>
                 </span>
                 <span className="caption-5 text-muted hidden md:block mt-0.5">
@@ -285,21 +286,27 @@ export const Header: React.FC = () => {
 
           {/* Right Actions: Search (Mobile), Language, Cart */}
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-            {/* Mobile Search Button (44px min touch target) */}
+            {/* Mobile Search Button (40px min touch target) */}
             <button
               type="button"
               onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-              className="md:hidden flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-ink hover:bg-surface-muted transition-colors"
+              className="md:hidden flex h-10 w-8.5 sm:h-11 sm:w-11 min-h-[40px] items-center justify-center rounded-lg text-ink hover:bg-surface-muted transition-colors active:scale-95"
               aria-label="Search products"
             >
               <FontAwesomeIcon icon={Icons.search} className="h-4 w-4" />
             </button>
 
-            {/* Language Switcher (44px min touch target) */}
+            {/* Theme Toggle (Light / Dark mode) - VISIBLE ON ALL SCREENS */}
+            <ThemeToggle
+              variant="icon"
+              className="h-10 w-8.5 sm:w-11 sm:h-11 min-h-[40px]"
+            />
+
+            {/* Language Switcher (40px min touch target) */}
             <button
               type="button"
               onClick={toggleLanguage}
-              className="flex items-center justify-center h-10 min-h-[44px] px-2.5 sm:px-3 rounded-lg border border-border bg-surface hover:bg-surface-muted text-xs font-semibold text-ink transition-colors active:scale-95"
+              className="flex items-center justify-center h-10 sm:h-11 min-h-[40px] px-1.5 sm:px-3 rounded-lg border border-border bg-surface hover:bg-surface-muted text-xs font-semibold text-ink transition-colors active:scale-95"
               aria-label={`Switch language: ${language === 'en' ? 'Bangla' : 'English'}`}
             >
               <span className={language === 'en' ? 'text-quantum font-bold' : 'text-muted'}>
@@ -311,11 +318,11 @@ export const Header: React.FC = () => {
               </span>
             </button>
 
-            {/* Shopping Cart Button (44px min touch target) */}
+            {/* Shopping Cart Button (40px min touch target) */}
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="relative flex items-center justify-center gap-1.5 h-10 min-h-[44px] px-3 sm:px-3.5 rounded-xl bg-quantum text-white hover:bg-quantum-hover active:scale-95 shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum"
+              className="relative flex items-center justify-center gap-1 sm:gap-1.5 h-10 sm:h-11 min-h-[40px] px-2 sm:px-3.5 rounded-xl bg-quantum text-white hover:bg-quantum-hover active:scale-95 shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quantum"
               aria-label={`Shopping cart with ${totalCount} items`}
             >
               <FontAwesomeIcon icon={Icons.cart} className="h-3.5 w-3.5" />
@@ -574,6 +581,10 @@ export const Header: React.FC = () => {
                     </Link>
                   ))}
                 </div>
+              </div>
+              {/* Appearance / Theme Switcher in Drawer */}
+              <div className="pt-3 border-t border-border">
+                <ThemeToggle variant="row" />
               </div>
             </div>
 

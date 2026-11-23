@@ -18,3 +18,4 @@ export { EmptyState } from './EmptyState';
 export { Breadcrumb } from './Breadcrumb';
 export { FloatingChatButton } from './FloatingChatButton';
 export { TaglineReveal } from './TaglineReveal';
+export { ScrollToTop } from './ScrollToTop';

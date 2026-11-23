@@ -6,11 +6,13 @@ import { setItem, STORAGE_KEYS } from '../../utilities/storage';
 import { useToast } from '../../context/ToastContext';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
 import { Icons } from '../../utilities/icons';
 
 export const AdminSettingsPage: React.FC = () => {
   const { adminUser } = useAdminAuth();
   const { language, t } = useLanguage();
+  const { isDark, setTheme } = useTheme();
   const [settings, setSettings] = useState<StoreSettings>(() => settingsService.getSettings());
 
   // Admin Profile Fields
@@ -216,6 +218,63 @@ export const AdminSettingsPage: React.FC = () => {
                     className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
                   />
                 </div>
+              </div>
+            </div>
+
+            <hr className="border-border my-1" />
+
+            {/* Appearance & Color Mode */}
+            <div>
+              <h3 className="title-3 font-bold text-ink mb-1 flex items-center gap-2">
+                <FontAwesomeIcon icon={isDark ? Icons.moon : Icons.sun} className="h-3.5 w-3.5 text-quantum" />
+                <span>{language === 'bn' ? 'স্টোর ও অ্যাডমিন থিম মুড' : 'Storefront & Admin Theme Mode'}</span>
+              </h3>
+              <p className="caption-4 text-muted mb-4">
+                {language === 'bn'
+                  ? 'গ্রাহক ওয়েবসাইট ও অ্যাডমিন প্যানেলের জন্য লাইট অথবা ডার্ক মুড নির্বাচন করুন।'
+                  : 'Choose between Light Mode or Dark Mode across storefront and admin panel.'}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setTheme('light')}
+                  className={`p-4 rounded-xl border text-left flex items-start gap-3 transition-all ${
+                    !isDark
+                      ? 'border-quantum bg-quantum/5 ring-2 ring-quantum/20'
+                      : 'border-border bg-surface hover:bg-surface-muted'
+                  }`}
+                >
+                  <div className="h-9 w-9 rounded-lg bg-surface border border-border flex items-center justify-center text-amber-500 shadow-2xs flex-shrink-0">
+                    <FontAwesomeIcon icon={Icons.sun} className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="caption-2 font-bold text-ink block">Light Mode</span>
+                    <span className="caption-5 text-muted block mt-0.5">
+                      Clean modern daylight design, high contrast readable interface.
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTheme('dark')}
+                  className={`p-4 rounded-xl border text-left flex items-start gap-3 transition-all ${
+                    isDark
+                      ? 'border-quantum bg-quantum/10 ring-2 ring-quantum/30'
+                      : 'border-border bg-surface hover:bg-surface-muted'
+                  }`}
+                >
+                  <div className="h-9 w-9 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-quantum shadow-2xs flex-shrink-0">
+                    <FontAwesomeIcon icon={Icons.moon} className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="caption-2 font-bold text-ink block">Dark Mode</span>
+                    <span className="caption-5 text-muted block mt-0.5">
+                      Sleek cyber charcoal palette strictly matching landing-page-design tokens.
+                    </span>
+                  </div>
+                </button>
               </div>
             </div>
           </div>

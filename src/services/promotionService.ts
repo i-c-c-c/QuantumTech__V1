@@ -26,21 +26,31 @@ export const promotionService = {
     const now = new Date().getTime();
     let updated = false;
 
-    // Automatically synchronize status based on current timestamps
+    // Automatically synchronize status based on current timestamps and heal deprecated image URLs
     const synced = campaigns.map((c) => {
-      if (c.status === 'Paused' || c.status === 'Draft') return c;
-      const start = new Date(c.startDate).getTime();
-      const end = new Date(c.endDate).getTime();
+      let camp = c;
+      if (camp.campaignImage && camp.campaignImage.includes('1609592426815')) {
+        updated = true;
+        camp = {
+          ...camp,
+          campaignImage: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=1200&q=80',
+          desktopBanner: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=1600&q=80',
+          mobileBanner: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80',
+        };
+      }
+      if (camp.status === 'Paused' || camp.status === 'Draft') return camp;
+      const start = new Date(camp.startDate).getTime();
+      const end = new Date(camp.endDate).getTime();
 
-      if (now > end && c.status !== 'Expired') {
+      if (now > end && camp.status !== 'Expired') {
         updated = true;
-        return { ...c, status: 'Expired' as const, updatedAt: new Date().toISOString() };
+        return { ...camp, status: 'Expired' as const, updatedAt: new Date().toISOString() };
       }
-      if (now >= start && now <= end && c.status === 'Scheduled') {
+      if (now >= start && now <= end && camp.status === 'Scheduled') {
         updated = true;
-        return { ...c, status: 'Active' as const, updatedAt: new Date().toISOString() };
+        return { ...camp, status: 'Active' as const, updatedAt: new Date().toISOString() };
       }
-      return c;
+      return camp;
     });
 
     if (updated) {

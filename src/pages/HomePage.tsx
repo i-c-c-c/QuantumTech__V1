@@ -61,13 +61,6 @@ export const HomePage: React.FC = () => {
   const featuredCampaign = activeCampaigns.find((c) => c.bannerPosition === 'featured');
   const middleCampaign = activeCampaigns.find((c) => c.bannerPosition === 'middle');
 
-  const featuredCampaignProducts = featuredCampaign
-    ? products.filter((p) => {
-        const priceInfo = promotionService.calculateProductPrice(p);
-        return priceInfo.appliedCampaign?.id === featuredCampaign.id || priceInfo.discountAmount > 0;
-      })
-    : [];
-
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newsletterEmail || !newsletterEmail.includes('@')) {
@@ -226,6 +219,11 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* DYNAMIC FEATURED CAMPAIGN / FESTIVAL BANNER (Placed right below Categories) */}
+      {featuredCampaign && (
+        <CampaignFeaturedSection campaign={featuredCampaign} />
+      )}
+
       {/* 3. NEW ARRIVALS SECTION */}
       <section className="py-12 sm:py-16 bg-surface-alt border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -279,14 +277,6 @@ export const HomePage: React.FC = () => {
           <ProductGrid products={featuredProducts} />
         </div>
       </section>
-
-      {/* DYNAMIC FEATURED CAMPAIGN / FESTIVAL OFFER SECTION */}
-      {featuredCampaign && (
-        <CampaignFeaturedSection
-          campaign={featuredCampaign}
-          products={featuredCampaignProducts.length > 0 ? featuredCampaignProducts : products.slice(0, 4)}
-        />
-      )}
 
       {/* 5. PROMOTIONAL BANNER SECTION */}
       <section data-testid="promotional-banner" className="py-10 bg-surface-alt border-b border-border">
@@ -483,7 +473,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 9. SOCIAL CONNECTION & NEWSLETTER SECTION */}
-      <section className="py-14 bg-surface-alt border-b border-border">
+      <section className="py-16 sm:py-20 bg-surface border-t border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <span className="caption-3 px-3 py-1 rounded-full bg-quantum-soft text-quantum font-semibold uppercase tracking-wider mb-2 inline-block">
             Stay in the Loop
@@ -514,7 +504,7 @@ export const HomePage: React.FC = () => {
           </form>
 
           {/* Social Quick Connections */}
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <a
               href={settings.facebookUrl}
               target="_blank"
@@ -545,25 +535,6 @@ export const HomePage: React.FC = () => {
               <span>WhatsApp</span>
             </a>
           </div>
-        </div>
-      </section>
-
-      {/* Final Risk Reversal CTA Strip */}
-      <section className="py-14 bg-ink text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="heading-4 sm:heading-3 font-bold mb-3">
-            {language === 'bn' ? 'আজই অর্ডার করুন, পণ্য হাতে পেয়ে পরিশোধ করুন।' : 'Upgrade your charging setup today. Pay only upon delivery.'}
-          </h2>
-          <p className="body-4 text-slate-300 max-w-lg mx-auto mb-6">
-            100% verified compatibility • Cash on Delivery nationwide • 7-day hassle-free replacement
-          </p>
-          <Link
-            to="/shop"
-            className="btn-base bg-quantum text-white hover:bg-quantum-hover button-lg shadow-float h-12 px-8 text-center min-h-[44px]"
-          >
-            <FontAwesomeIcon icon={Icons.cart} className="h-4 w-4" />
-            <span>{t.hero.shopNow}</span>
-          </Link>
         </div>
       </section>
     </div>

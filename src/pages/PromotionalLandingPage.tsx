@@ -22,6 +22,11 @@ export const PromotionalLandingPage: React.FC = () => {
   );
   const [products, setProducts] = useState<Product[]>([]);
   const [copiedCoupon, setCopiedCoupon] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [slug]);
 
   useEffect(() => {
     const handleSync = () => {
@@ -190,15 +195,27 @@ export const PromotionalLandingPage: React.FC = () => {
 
             {/* Visual Column */}
             <div className="lg:col-span-5 relative w-full">
-              <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl">
-                <img
-                  src={campaign.campaignImage || 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=1200&q=80'}
-                  alt={campaignTitle}
-                  className="w-full h-auto object-cover max-h-[420px]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-transparent flex flex-col justify-end p-6">
-                  <span className="caption-3 px-2.5 py-1 rounded bg-amber-500 text-ink font-bold inline-block w-fit mb-1">
-                    Verified Campaign Offer
+              <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl w-full h-[280px] sm:h-[340px] lg:h-[400px] flex items-center justify-center">
+                {!imgError ? (
+                  <img
+                    src={campaign.campaignImage || 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=1200&q=80'}
+                    alt={campaignTitle}
+                    onError={() => setImgError(true)}
+                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-ink flex flex-col items-center justify-center p-8 text-center">
+                    <div className="h-16 w-16 rounded-2xl bg-quantum/20 border border-quantum/40 flex items-center justify-center mb-4 text-quantum">
+                      <FontAwesomeIcon icon={Icons.shield} className="h-8 w-8 text-quantum" />
+                    </div>
+                    <p className="heading-4 font-bold text-white mb-1">{campaignTitle}</p>
+                    <p className="caption-2 text-slate-400">QuantumTech Verified Hardware Guarantee</p>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/40 to-transparent flex flex-col justify-end p-6 pointer-events-none">
+                  <span className="caption-3 px-2.5 py-1 rounded bg-amber-500 text-ink font-bold inline-flex items-center gap-1.5 w-fit mb-2 shadow-xs">
+                    <FontAwesomeIcon icon={Icons.check} className="h-2.5 w-2.5" />
+                    <span>Verified Campaign Offer</span>
                   </span>
                   <p className="title-3 text-white font-semibold">
                     Rigorously tested voltage, wattage, and durability.
@@ -343,15 +360,15 @@ export const PromotionalLandingPage: React.FC = () => {
       </section>
 
       {/* 6. FINAL CALL TO ACTION */}
-      <section className="py-12 sm:py-16 bg-ink text-white text-center relative overflow-hidden">
+      <section className="py-14 sm:py-20 bg-surface border-t border-border text-center relative overflow-hidden">
         <div className="max-w-2xl mx-auto px-4 relative z-10 flex flex-col items-center gap-4">
-          <span className="caption-3 px-3 py-1 rounded-full bg-quantum text-white font-bold uppercase tracking-wider">
+          <span className="caption-3 px-3 py-1 rounded-full bg-quantum-soft text-quantum font-bold uppercase tracking-wider">
             Do Not Miss Out
           </span>
-          <h2 className="heading-3 sm:heading-2 font-bold text-white">
+          <h2 className="heading-3 sm:heading-2 font-bold text-ink">
             Upgrade Your Tech Setup Today
           </h2>
-          <p className="body-3 text-slate-300 max-w-lg">
+          <p className="body-3 text-muted max-w-lg">
             High efficiency charging, studio audio, and long lasting power banks delivered nationwide.
           </p>
           <a
