@@ -188,6 +188,30 @@ export interface StoreSettings {
   messengerUrl: string;
   address: string;
   businessHours: string;
+
+  // Hero Section Customization
+  heroBadgeText?: string;
+  heroBadgeTextBn?: string;
+  heroTitleLine1?: string;
+  heroTitleLine1Bn?: string;
+  heroTitleLine2?: string;
+  heroTitleLine2Bn?: string;
+  heroSubtitle?: string;
+  heroSubtitleBn?: string;
+  heroBannerImage?: string;
+  heroBannerBadge?: string;
+  heroBannerBadgeBn?: string;
+  heroBannerTagline?: string;
+  heroBannerTaglineBn?: string;
+  heroPrimaryCtaText?: string;
+  heroPrimaryCtaTextBn?: string;
+  heroPrimaryCtaLink?: string;
+  heroSecondaryCtaText?: string;
+  heroSecondaryCtaTextBn?: string;
+  heroSecondaryCtaLink?: string;
+  heroRatingScore?: string;
+  heroRatingText?: string;
+  heroRatingTextBn?: string;
 }
 
 export interface ToastMessage {

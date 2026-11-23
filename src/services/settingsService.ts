@@ -4,7 +4,8 @@ import { getItem, setItem, STORAGE_KEYS } from '../utilities/storage';
 
 export const settingsService = {
   getSettings(): StoreSettings {
-    return getItem<StoreSettings>(STORAGE_KEYS.SETTINGS, initialStoreSettings);
+    const saved = getItem<StoreSettings>(STORAGE_KEYS.SETTINGS, initialStoreSettings);
+    return { ...initialStoreSettings, ...saved };
   },
 
   saveSettings(newSettings: StoreSettings): StoreSettings {

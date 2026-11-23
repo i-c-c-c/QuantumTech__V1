@@ -8,6 +8,8 @@ import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Icons } from '../../utilities/icons';
+import { ImageUploadInput } from '../../components/ImageUploadInput';
+import heroBannerImg from '../../assets/brand/hero-banner.png';
 
 export const AdminSettingsPage: React.FC = () => {
   const { adminUser } = useAdminAuth();
@@ -18,7 +20,7 @@ export const AdminSettingsPage: React.FC = () => {
   // Admin Profile Fields
   const [adminName, setAdminName] = useState(adminUser?.name || 'Irfan Khan Shahil');
   const [adminEmail, setAdminEmail] = useState(adminUser?.email || 'admin@quantumtech.com');
-  const [activeTab, setActiveTab] = useState<'store' | 'payment' | 'social' | 'profile'>('store');
+  const [activeTab, setActiveTab] = useState<'store' | 'hero' | 'payment' | 'social' | 'profile'>('store');
 
   const { showToast } = useToast();
 
@@ -77,6 +79,19 @@ export const AdminSettingsPage: React.FC = () => {
         >
           <FontAwesomeIcon icon={Icons.store} className="mr-2 h-3.5 w-3.5" />
           <span>{language === 'bn' ? 'স্টোর তথ্য ও যোগাযোগ' : 'Store Information & Contact'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('hero')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+            activeTab === 'hero'
+              ? 'bg-quantum text-white shadow-xs'
+              : 'bg-surface hover:bg-surface-alt text-slate-700 border border-border'
+          }`}
+        >
+          <FontAwesomeIcon icon={Icons.image} className="mr-2 h-3.5 w-3.5" />
+          <span>{language === 'bn' ? 'হিরো সেকশন ও ব্যানার' : 'Hero Section & Banner'}</span>
         </button>
 
         <button
@@ -275,6 +290,440 @@ export const AdminSettingsPage: React.FC = () => {
                     </span>
                   </div>
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Storefront Hero Section & Banner Customization */}
+        {activeTab === 'hero' && (
+          <div className="bg-surface rounded-2xl border border-border p-6 sm:p-8 shadow-xs flex flex-col gap-6 animate-fadeIn">
+            {/* Header */}
+            <div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h2 className="title-2 font-bold text-ink mb-1 flex items-center gap-2">
+                  <FontAwesomeIcon icon={Icons.image} className="h-4 w-4 text-quantum" />
+                  <span>{language === 'bn' ? 'হিরো সেকশন ও স্টোরফ্রন্ট ব্যানার' : 'Hero Section & Storefront Banner'}</span>
+                </h2>
+                <span className="caption-3 px-2.5 py-0.5 rounded-full bg-quantum/10 text-quantum font-semibold w-fit">
+                  {language === 'bn' ? 'স্টোরফ্রন্ট হোমপেজ' : 'Storefront Landing Page'}
+                </span>
+              </div>
+              <p className="caption-3 text-muted">
+                {language === 'bn'
+                  ? 'গ্রাহক হোমপেজের মূল হিরো ব্যানার ছবি, হেডলাইন টেক্সট, সাবটাইটেল এবং বাটন সহজে পরিবর্তন করুন।'
+                  : 'Customize the primary hero banner image, headline texts, badge, call-to-action buttons, and social proof on the storefront landing page.'}
+              </p>
+            </div>
+
+            {/* Banner Image Upload & Controls */}
+            <div className="p-4 sm:p-5 rounded-xl border border-border bg-surface-alt/40 flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="title-3 font-bold text-ink flex items-center gap-2">
+                    <FontAwesomeIcon icon={Icons.camera} className="h-3.5 w-3.5 text-quantum" />
+                    <span>{language === 'bn' ? 'হিরো ব্যানার ছবি (Hero Banner Image)' : 'Hero Banner Image'}</span>
+                  </h3>
+                  <p className="caption-4 text-muted">
+                    {language === 'bn'
+                      ? 'নতুন ব্যানার আপলোড করুন বা লিংক দিন। খালি রাখলে ডিফল্ট ব্যানার দেখাবে।'
+                      : 'Upload an image file (JPG, PNG, WEBP) or paste an image URL. Leave empty to use the default brand visual.'}
+                  </p>
+                </div>
+                {settings.heroBannerImage && (
+                  <button
+                    type="button"
+                    onClick={() => setSettings({ ...settings, heroBannerImage: '' })}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-border bg-surface hover:bg-surface-muted text-rose-500 flex items-center gap-1.5 transition-colors self-start sm:self-auto"
+                  >
+                    <FontAwesomeIcon icon={Icons.refresh} className="h-3 w-3" />
+                    <span>{language === 'bn' ? 'ডিফল্ট ব্যানারে ফিরুন' : 'Reset to Default Banner'}</span>
+                  </button>
+                )}
+              </div>
+
+              <ImageUploadInput
+                value={settings.heroBannerImage || ''}
+                onChange={(url) => setSettings({ ...settings, heroBannerImage: url })}
+                label={language === 'bn' ? 'ব্যানার ছবি আপলোড (Hero Banner)' : 'Hero Banner Image Upload'}
+                placeholder="https://images.unsplash.com/... or upload local image"
+                helperText={language === 'bn' ? 'ব্যানার ফাইল ড্রপ করুন বা আপলোড করুন (স্বয়ংক্রিয়ভাবে কম্প্রেস হবে)' : 'Select or drag & drop banner (auto-compressed for ultra fast web loading)'}
+                aspectRatio="video"
+                maxWidth={1600}
+                maxHeight={1200}
+              />
+
+              {/* Banner Overlay Floating Texts */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-border">
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    {language === 'bn' ? 'ব্যানার ওভারলে ব্যাজ (English)' : 'Banner Overlay Badge (English)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroBannerBadge || ''}
+                    onChange={(e) => setSettings({ ...settings, heroBannerBadge: e.target.value })}
+                    placeholder="100% Genuine Tech"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    {language === 'bn' ? 'ব্যানার ওভারলে ব্যাজ (বাংলা)' : 'Banner Overlay Badge (Bangla)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroBannerBadgeBn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroBannerBadgeBn: e.target.value })}
+                    placeholder="১০০% জেনুইন টেক"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    {language === 'bn' ? 'ব্যানার ওভারলে ট্যাগলাইন (English)' : 'Banner Overlay Tagline (English)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroBannerTagline || ''}
+                    onChange={(e) => setSettings({ ...settings, heroBannerTagline: e.target.value })}
+                    placeholder="We find the tech so you do not have to."
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    {language === 'bn' ? 'ব্যানার ওভারলে ট্যাগলাইন (বাংলা)' : 'Banner Overlay Tagline (Bangla)'}
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroBannerTaglineBn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroBannerTaglineBn: e.target.value })}
+                    placeholder="আপনার জন্য সেরা গ্যাজেট আমরাই বাছাই করি।"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Headline & Subtitle Section */}
+            <div className="p-4 sm:p-5 rounded-xl border border-border bg-surface-alt/40 flex flex-col gap-4">
+              <div>
+                <h3 className="title-3 font-bold text-ink flex items-center gap-2">
+                  <FontAwesomeIcon icon={Icons.tag} className="h-3.5 w-3.5 text-quantum" />
+                  <span>{language === 'bn' ? 'হিরো হেডলাইন ও বর্ণনা' : 'Hero Badge, Headings & Subtitle'}</span>
+                </h3>
+                <p className="caption-4 text-muted">
+                  {language === 'bn'
+                    ? 'ইংরেজি ও বাংলা উভয় ভাষার জন্য হিরো টেক্সট কাস্টমাইজ করুন।'
+                    : 'Configure bilingual headline typography for both English and Bangla visitors.'}
+                </p>
+              </div>
+
+              {/* Top Pill Badge */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    Top Pill Badge (English)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroBadgeText || ''}
+                    onChange={(e) => setSettings({ ...settings, heroBadgeText: e.target.value })}
+                    placeholder="NEW ARRIVALS 2026"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    Top Pill Badge (Bangla)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroBadgeTextBn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroBadgeTextBn: e.target.value })}
+                    placeholder="নতুন কালেকশন ২০২৬"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+              </div>
+
+              {/* Title Line 1 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    Main Heading Line 1 (English)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroTitleLine1 || ''}
+                    onChange={(e) => setSettings({ ...settings, heroTitleLine1: e.target.value })}
+                    placeholder="Gear up."
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    Main Heading Line 1 (Bangla)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroTitleLine1Bn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroTitleLine1Bn: e.target.value })}
+                    placeholder="সেরা গ্যাজেট।"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+              </div>
+
+              {/* Title Line 2 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    Main Heading Line 2 (English, Highlighted)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroTitleLine2 || ''}
+                    onChange={(e) => setSettings({ ...settings, heroTitleLine2: e.target.value })}
+                    placeholder="Charge fast."
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    Main Heading Line 2 (Bangla, Highlighted)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.heroTitleLine2Bn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroTitleLine2Bn: e.target.value })}
+                    placeholder="দ্রুত চার্জিং।"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+              </div>
+
+              {/* Subtitle */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    Hero Subtitle Description (English)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.heroSubtitle || ''}
+                    onChange={(e) => setSettings({ ...settings, heroSubtitle: e.target.value })}
+                    placeholder="Quality verified tech accessories at honest prices. Cash on Delivery and fast nationwide delivery."
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">
+                    Hero Subtitle Description (Bangla)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.heroSubtitleBn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroSubtitleBn: e.target.value })}
+                    placeholder="ন্যায্য মূল্যে কোয়ালিটি ভেরিফাইড টেক এক্সেসরিজ। ক্যাশ অন ডেলিভারি এবং দ্রুত সারাদেশে ডেলিভারি।"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Call-to-Action Buttons */}
+            <div className="p-4 sm:p-5 rounded-xl border border-border bg-surface-alt/40 flex flex-col gap-4">
+              <div>
+                <h3 className="title-3 font-bold text-ink flex items-center gap-2">
+                  <FontAwesomeIcon icon={Icons.cart} className="h-3.5 w-3.5 text-quantum" />
+                  <span>{language === 'bn' ? 'কল-টু-অ্যাকশন বাটন' : 'Hero Action Buttons (CTAs)'}</span>
+                </h3>
+                <p className="caption-4 text-muted">
+                  {language === 'bn' ? 'বাটনের টেক্সট এবং গন্তব্য লিংক নির্ধারণ করুন।' : 'Configure button labels and destination page URLs.'}
+                </p>
+              </div>
+
+              {/* Primary CTA */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Primary Button Text (EN)</label>
+                  <input
+                    type="text"
+                    value={settings.heroPrimaryCtaText || ''}
+                    onChange={(e) => setSettings({ ...settings, heroPrimaryCtaText: e.target.value })}
+                    placeholder="Shop Now"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Primary Button Text (BN)</label>
+                  <input
+                    type="text"
+                    value={settings.heroPrimaryCtaTextBn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroPrimaryCtaTextBn: e.target.value })}
+                    placeholder="শপ করুন"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Primary Button Route Link</label>
+                  <input
+                    type="text"
+                    value={settings.heroPrimaryCtaLink || ''}
+                    onChange={(e) => setSettings({ ...settings, heroPrimaryCtaLink: e.target.value })}
+                    placeholder="/shop"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Secondary CTA */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Secondary Button Text (EN)</label>
+                  <input
+                    type="text"
+                    value={settings.heroSecondaryCtaText || ''}
+                    onChange={(e) => setSettings({ ...settings, heroSecondaryCtaText: e.target.value })}
+                    placeholder="Browse Categories"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Secondary Button Text (BN)</label>
+                  <input
+                    type="text"
+                    value={settings.heroSecondaryCtaTextBn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroSecondaryCtaTextBn: e.target.value })}
+                    placeholder="ক্যাটাগরি দেখুন"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Secondary Button Route Link</label>
+                  <input
+                    type="text"
+                    value={settings.heroSecondaryCtaLink || ''}
+                    onChange={(e) => setSettings({ ...settings, heroSecondaryCtaLink: e.target.value })}
+                    placeholder="/shop"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Social Proof & Rating Line */}
+            <div className="p-4 sm:p-5 rounded-xl border border-border bg-surface-alt/40 flex flex-col gap-4">
+              <div>
+                <h3 className="title-3 font-bold text-ink flex items-center gap-2">
+                  <FontAwesomeIcon icon={Icons.star} className="h-3.5 w-3.5 text-amber-500" />
+                  <span>{language === 'bn' ? 'সোশ্যাল প্রুফ ও রেটিং বার' : 'Social Proof & Rating Strip'}</span>
+                </h3>
+                <p className="caption-4 text-muted">
+                  {language === 'bn' ? 'হিরো সেকশনের নিচে ট্রাস্ট রেটিং ও ক্রেতার সংখ্যা প্রদর্শন করুন।' : 'Trust indicators and customer review metrics displayed below CTA buttons.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Rating Score</label>
+                  <input
+                    type="text"
+                    value={settings.heroRatingScore || ''}
+                    onChange={(e) => setSettings({ ...settings, heroRatingScore: e.target.value })}
+                    placeholder="4.8 / 5 Rating"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Rating Subtext (EN)</label>
+                  <input
+                    type="text"
+                    value={settings.heroRatingText || ''}
+                    onChange={(e) => setSettings({ ...settings, heroRatingText: e.target.value })}
+                    placeholder="from 2,500+ buyers across Bangladesh"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+                <div>
+                  <label className="caption-3 font-semibold text-ink block mb-1">Rating Subtext (BN)</label>
+                  <input
+                    type="text"
+                    value={settings.heroRatingTextBn || ''}
+                    onChange={(e) => setSettings({ ...settings, heroRatingTextBn: e.target.value })}
+                    placeholder="সারাদেশে ২,৫০০+ সন্তুষ্ট ক্রেতা"
+                    className="w-full rounded-xl border border-border p-2.5 text-xs text-ink focus:outline-none focus:border-quantum"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Live Preview */}
+            <div className="p-4 sm:p-5 rounded-xl border border-quantum/30 bg-quantum/5 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="caption-3 font-bold text-quantum uppercase tracking-wider flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={Icons.eye} className="h-3.5 w-3.5" />
+                  <span>Live Storefront Preview</span>
+                </span>
+                <span className="caption-4 text-muted">Visualizing current hero configuration</span>
+              </div>
+              <div className="bg-surface rounded-xl border border-border p-4 sm:p-6 shadow-xs">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                  <div className="md:col-span-7 flex flex-col items-start">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-quantum-soft text-quantum caption-4 font-semibold mb-2">
+                      <FontAwesomeIcon icon={Icons.lightning} className="h-2.5 w-2.5" />
+                      <span>{settings.heroBadgeText || 'NEW ARRIVALS 2026'}</span>
+                    </div>
+                    <h3 className="title-1 font-bold text-ink mb-2 leading-tight">
+                      <span className="hero-gradient-text-light block">{settings.heroTitleLine1 || 'Gear up.'}</span>
+                      <span className="text-quantum block">{settings.heroTitleLine2 || 'Charge fast.'}</span>
+                    </h3>
+                    <p className="caption-2 text-muted mb-4 max-w-md">
+                      {settings.heroSubtitle || 'Quality verified tech accessories at honest prices.'}
+                    </p>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="px-4 py-2 rounded-lg bg-quantum text-white text-xs font-semibold flex items-center gap-1.5">
+                        <FontAwesomeIcon icon={Icons.cart} className="h-3 w-3" />
+                        <span>{settings.heroPrimaryCtaText || 'Shop Now'}</span>
+                      </div>
+                      <div className="px-3 py-2 rounded-lg border border-border bg-surface text-ink text-xs font-semibold flex items-center gap-1.5">
+                        <FontAwesomeIcon icon={Icons.category} className="h-3 w-3 text-muted" />
+                        <span>{settings.heroSecondaryCtaText || 'Browse Categories'}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t border-border w-full">
+                      <div className="flex text-amber-400 text-2xs">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <FontAwesomeIcon key={i} icon={Icons.star} className="h-2.5 w-2.5" />
+                        ))}
+                      </div>
+                      <span className="caption-4 text-muted">
+                        <strong className="text-ink font-semibold">{settings.heroRatingScore || '4.8 / 5 Rating'}</strong>{' '}
+                        {settings.heroRatingText || 'from 2,500+ buyers across Bangladesh'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-5">
+                    <div className="relative rounded-xl overflow-hidden border border-border bg-ink shadow-sm aspect-video">
+                      <img
+                        src={settings.heroBannerImage || heroBannerImg}
+                        alt="Hero Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent flex flex-col justify-end p-3">
+                        <span className="caption-5 px-1.5 py-0.5 rounded bg-quantum text-white inline-block w-fit mb-0.5 font-semibold">
+                          {settings.heroBannerBadge || '100% Genuine Tech'}
+                        </span>
+                        <p className="caption-2 text-white font-semibold">
+                          {settings.heroBannerTagline || 'We find the tech so you do not have to.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

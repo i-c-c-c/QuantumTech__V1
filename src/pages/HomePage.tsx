@@ -121,38 +121,56 @@ export const HomePage: React.FC = () => {
             <div className="lg:col-span-7 flex flex-col items-start max-w-[680px]">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-quantum-soft text-quantum caption-3 font-semibold mb-4 sm:mb-6">
                 <FontAwesomeIcon icon={Icons.lightning} className="h-3 w-3" />
-                <span>{t.hero.badge}</span>
+                <span>
+                  {language === 'bn'
+                    ? (settings.heroBadgeTextBn || settings.heroBadgeText || t.hero.badge)
+                    : (settings.heroBadgeText || t.hero.badge)}
+                </span>
               </div>
 
               <h1 className="heading-3 sm:heading-1 font-bold tracking-tight text-ink mb-4 sm:mb-6 leading-tight">
                 <span className="hero-gradient-text-light block">
-                  {language === 'bn' ? 'সেরা গ্যাজেট।' : 'Gear up.'}
+                  {language === 'bn'
+                    ? (settings.heroTitleLine1Bn || settings.heroTitleLine1 || 'সেরা গ্যাজেট।')
+                    : (settings.heroTitleLine1 || 'Gear up.')}
                 </span>
                 <span className="text-quantum block">
-                  {language === 'bn' ? 'দ্রুত চার্জিং।' : 'Charge fast.'}
+                  {language === 'bn'
+                    ? (settings.heroTitleLine2Bn || settings.heroTitleLine2 || 'দ্রুত চার্জিং।')
+                    : (settings.heroTitleLine2 || 'Charge fast.')}
                 </span>
               </h1>
 
               <p className="body-2 text-muted mb-6 sm:mb-8 max-w-[560px]">
-                {t.hero.subtitle}
+                {language === 'bn'
+                  ? (settings.heroSubtitleBn || settings.heroSubtitle || t.hero.subtitle)
+                  : (settings.heroSubtitle || t.hero.subtitle)}
               </p>
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto mb-6 sm:mb-8">
                 <Link
-                  to="/shop"
+                  to={settings.heroPrimaryCtaLink || '/shop'}
                   className="btn-base bg-quantum text-white hover:bg-quantum-hover button-lg shadow-sm h-12 px-7 text-center min-h-[44px]"
                 >
                   <FontAwesomeIcon icon={Icons.cart} className="h-4 w-4" />
-                  <span>{t.hero.shopNow}</span>
+                  <span>
+                    {language === 'bn'
+                      ? (settings.heroPrimaryCtaTextBn || settings.heroPrimaryCtaText || t.hero.shopNow)
+                      : (settings.heroPrimaryCtaText || t.hero.shopNow)}
+                  </span>
                 </Link>
 
                 <Link
-                  to="/shop"
+                  to={settings.heroSecondaryCtaLink || '/shop'}
                   className="btn-base bg-surface border border-border text-ink hover:bg-surface-muted button-md h-12 px-5 text-center min-h-[44px]"
                 >
                   <FontAwesomeIcon icon={Icons.category} className="h-4 w-4 text-muted" />
-                  <span>{t.hero.browseCategories}</span>
+                  <span>
+                    {language === 'bn'
+                      ? (settings.heroSecondaryCtaTextBn || settings.heroSecondaryCtaText || t.hero.browseCategories)
+                      : (settings.heroSecondaryCtaText || t.hero.browseCategories)}
+                  </span>
                 </Link>
               </div>
 
@@ -164,7 +182,12 @@ export const HomePage: React.FC = () => {
                   ))}
                 </div>
                 <span className="caption-2 text-muted">
-                  <strong className="text-ink font-semibold">4.8 / 5 Rating</strong> from 2,500+ buyers across Bangladesh
+                  <strong className="text-ink font-semibold">
+                    {settings.heroRatingScore || '4.8 / 5 Rating'}
+                  </strong>{' '}
+                  {language === 'bn'
+                    ? (settings.heroRatingTextBn || settings.heroRatingText || 'সারাদেশে ২,৫০০+ সন্তুষ্ট ক্রেতা')
+                    : (settings.heroRatingText || 'from 2,500+ buyers across Bangladesh')}
                 </span>
               </div>
             </div>
@@ -173,17 +196,21 @@ export const HomePage: React.FC = () => {
             <div className="lg:col-span-5 relative w-full">
               <div className="relative rounded-2xl overflow-hidden border border-border bg-ink shadow-float group">
                 <img
-                  src={heroBannerImg}
-                  alt="QuantumTech premium tech accessories showcase"
+                  src={settings.heroBannerImage || heroBannerImg}
+                  alt={settings.storeName || "QuantumTech premium tech accessories showcase"}
                   className="w-full h-auto object-cover group-hover:scale-102 transition-transform duration-500 ease-brand"
                   loading="eager"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent flex flex-col justify-end p-5 sm:p-6">
                   <span className="caption-3 px-2.5 py-1 rounded bg-quantum text-white inline-block w-fit mb-1 font-semibold">
-                    100% Genuine Tech
+                    {language === 'bn'
+                      ? (settings.heroBannerBadgeBn || settings.heroBannerBadge || '১০০% জেনুইন টেক')
+                      : (settings.heroBannerBadge || '100% Genuine Tech')}
                   </span>
                   <p className="title-3 text-white font-semibold">
-                    We find the tech so you do not have to.
+                    {language === 'bn'
+                      ? (settings.heroBannerTaglineBn || settings.heroBannerTagline || 'আপনার জন্য সেরা টেক এক্সেসরিজ আমরাই নিশ্চিত করি।')
+                      : (settings.heroBannerTagline || 'We find the tech so you do not have to.')}
                   </p>
                 </div>
               </div>
