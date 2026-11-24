@@ -58,7 +58,7 @@ export const CampaignFeaturedSection: React.FC<CampaignFeaturedSectionProps> = (
               <CampaignCountdownTimer
                 targetDate={campaign.endDate}
                 label={language === 'bn' ? 'অফার শেষ হতে বাকি:' : 'DEALS END IN:'}
-                className="bg-surface p-2.5 sm:p-3 rounded-2xl border border-border shadow-xs"
+                className="bg-surface dark:bg-[#181818] p-2.5 sm:p-3 rounded-2xl border border-border shadow-xs"
               />
             )}
 
