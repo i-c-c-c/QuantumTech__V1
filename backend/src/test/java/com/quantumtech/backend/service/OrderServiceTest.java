@@ -5,6 +5,7 @@ import com.quantumtech.backend.dto.CreateOrderRequest;
 import com.quantumtech.backend.dto.OrderStatusRequest;
 import com.quantumtech.backend.exception.ApiException;
 import com.quantumtech.backend.model.Order;
+import com.quantumtech.backend.model.Coupon;
 import com.quantumtech.backend.model.Product;
 import com.quantumtech.backend.model.StoreSettings;
 import com.quantumtech.backend.repository.OrderRepository;
@@ -34,6 +35,7 @@ class OrderServiceTest {
     private final OrderRepository orders = mock(OrderRepository.class);
     private final ProductRepository products = mock(ProductRepository.class);
     private final SettingsRepository settings = mock(SettingsRepository.class);
+    private final PromotionService promotions = mock(PromotionService.class);
     private final StockService stock = mock(StockService.class);
     private final OrderNumberGenerator numbers = mock(OrderNumberGenerator.class);
     private final NotificationService notifications = mock(NotificationService.class);
@@ -56,7 +58,13 @@ class OrderServiceTest {
         when(numbers.next()).thenReturn("QT-261123-0001", "QT-261123-0002", "QT-261123-0003");
         when(orders.insert(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
         when(mongo.findAndReplace(any(Query.class), any(Order.class))).thenAnswer(inv -> inv.getArgument(1));
-        service = new OrderService(orders, products, new CartService(products, settings), stock, numbers,
+        when(promotions.calculateProductPrice(any(), any())).thenAnswer(inv -> {
+            Product product = inv.getArgument(0);
+            return new PromotionService.PriceResult(product.getPrice(), product.getPrice(),
+                    0, null, null, null, null, 0);
+        });
+        service = new OrderService(orders, products, new CartService(products, settings, promotions),
+                promotions, stock, numbers,
                 new PaymentMethodCatalog(settings), new LookupRateLimiter(10, Duration.ofMinutes(15), Clock.systemUTC()),
                 notifications, mongo);
         catalog.put("p1", product("p1", 500, 10));
@@ -148,12 +156,54 @@ class OrderServiceTest {
         }
 
         @Test
-        void rejectsCouponCodes() {
+        void rejectsInvalidCouponCodes() {
             CreateOrderRequest base = cod(List.of(item("p1", 1)));
             CreateOrderRequest withCoupon = new CreateOrderRequest(base.customerName(), base.phone(), base.area(),
                     base.address(), null, null, null, null, "COD", null, null, "FREE100", 100, null, null, base.items());
+            when(promotions.validateCoupon(eq("FREE100"), anyString(), any()))
+                    .thenReturn(PromotionService.CouponValidationResult.invalid("Invalid coupon code"));
             ApiException ex = assertApiError(HttpStatus.BAD_REQUEST, () -> service.create(withCoupon, null));
             assertEquals("COUPON_INVALID", ex.getDetails().get("code"));
+        }
+
+        @Test
+        void persistsCouponDiscountAndRecordsUsage() {
+            Coupon coupon = new Coupon();
+            coupon.setCode("SAVE100");
+            when(promotions.validateCoupon(eq("SAVE100"), anyString(), any()))
+                    .thenReturn(new PromotionService.CouponValidationResult(true, 100, null, coupon));
+            CreateOrderRequest base = cod(List.of(item("p1", 1)));
+            CreateOrderRequest withCoupon = new CreateOrderRequest(base.customerName(), base.phone(), base.area(),
+                    base.address(), null, null, null, 470, "COD", null, null,
+                    "SAVE100", 100, null, null, base.items());
+
+            Order order = service.create(withCoupon, null);
+
+            assertEquals(500, order.getSubtotal());
+            assertEquals("SAVE100", order.getCouponCode());
+            assertEquals(100, order.getCouponDiscount());
+            assertEquals(470, order.getTotal());
+            verify(promotions).recordCouponUsage(eq("SAVE100"), eq("01712345678"),
+                    eq(order.getOrderNumber()), eq(100.0), any());
+        }
+
+        @Test
+        void rollsBackCouponUsageAndStockIfOrderInsertFails() {
+            Coupon coupon = new Coupon();
+            coupon.setCode("SAVE100");
+            when(promotions.validateCoupon(eq("SAVE100"), anyString(), any()))
+                    .thenReturn(new PromotionService.CouponValidationResult(true, 100, null, coupon));
+            doThrow(new IllegalStateException("database unavailable"))
+                    .when(orders).insert(any(Order.class));
+            CreateOrderRequest base = cod(List.of(item("p1", 1)));
+            CreateOrderRequest withCoupon = new CreateOrderRequest(base.customerName(), base.phone(), base.area(),
+                    base.address(), null, null, null, 470, "COD", null, null,
+                    "SAVE100", 100, null, null, base.items());
+
+            assertThrows(IllegalStateException.class, () -> service.create(withCoupon, null));
+
+            verify(promotions).rollbackCouponUsage("SAVE100", "QT-261123-0001");
+            verify(stock).releaseAll(List.of(new Reservation("p1", null, 1)));
         }
 
         @Test

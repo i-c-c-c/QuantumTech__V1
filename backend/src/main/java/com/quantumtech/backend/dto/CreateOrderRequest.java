@@ -14,7 +14,8 @@ import java.util.List;
  * <p>{@code subtotal}, {@code deliveryCharge} and {@code total} are optional echoes of what the
  * customer saw. They are never trusted: the server recalculates every amount. When {@code total}
  * is sent and differs from the server total, checkout is rejected with {@code PRICE_CHANGED}
- * so the customer can review the new amount. {@code couponDiscount} is ignored.
+ * so the customer can review the new amount. A supplied {@code couponCode} is validated and
+ * calculated by the server; the echoed {@code couponDiscount} is never trusted.
  */
 public record CreateOrderRequest(
         @NotBlank @Size(min = 2, max = 80) String customerName,

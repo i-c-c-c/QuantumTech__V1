@@ -14,6 +14,9 @@ import java.util.List;
 public record CartValidationRequest(
         @Pattern(regexp = "Inside Dhaka|Outside Dhaka", message = "Area must be Inside Dhaka or Outside Dhaka")
         String area,
+        @jakarta.validation.constraints.Size(max = 40) String couponCode,
+        @jakarta.validation.constraints.Pattern(regexp = Phone.PATTERN, message = Phone.MESSAGE)
+        String customerPhone,
         @NotEmpty @Size(max = 50, message = "A cart can contain at most 50 lines")
         List<@Valid CheckoutItemRequest> items
 ) {}

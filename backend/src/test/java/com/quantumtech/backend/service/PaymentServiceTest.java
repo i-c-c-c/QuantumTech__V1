@@ -36,8 +36,10 @@ class PaymentServiceTest {
         when(settings.findById("store")).thenReturn(Optional.of(settingsWithWallets()));
         when(mongo.findAndReplace(any(Query.class), any(Order.class))).thenAnswer(inv -> inv.getArgument(1));
         ProductRepository products = mock(ProductRepository.class);
+        PromotionService promotions = mock(PromotionService.class);
         LookupRateLimiter limiter = new LookupRateLimiter(10, Duration.ofMinutes(15), Clock.systemUTC());
-        OrderService orderService = new OrderService(orders, products, new CartService(products, settings),
+        OrderService orderService = new OrderService(orders, products,
+                new CartService(products, settings, promotions), promotions,
                 mock(StockService.class), mock(OrderNumberGenerator.class), new PaymentMethodCatalog(settings),
                 limiter, mock(NotificationService.class), mongo);
         payments = new PaymentService(orderService, limiter);

@@ -4,6 +4,7 @@ import com.quantumtech.backend.dto.CartLine;
 import com.quantumtech.backend.dto.CartQuote;
 import com.quantumtech.backend.exception.ApiException;
 import com.quantumtech.backend.model.Product;
+import com.quantumtech.backend.model.Coupon;
 import com.quantumtech.backend.model.StoreSettings;
 import com.quantumtech.backend.repository.ProductRepository;
 import com.quantumtech.backend.repository.SettingsRepository;
@@ -21,8 +22,9 @@ import static org.mockito.Mockito.*;
 class CartServiceTest {
     private final ProductRepository products = mock(ProductRepository.class);
     private final SettingsRepository settings = mock(SettingsRepository.class);
+    private final PromotionService promotions = mock(PromotionService.class);
     private final Map<String, Product> catalog = new HashMap<>();
-    private final CartService cart = new CartService(products, settings);
+    private final CartService cart = new CartService(products, settings, promotions);
 
     @BeforeEach
     void setUp() {
@@ -33,6 +35,24 @@ class CartServiceTest {
                 if (catalog.containsKey(id)) found.add(catalog.get(id));
             }
             return found;
+        });
+        when(promotions.calculateProductPrice(any(), any())).thenAnswer(inv -> {
+            Product product = inv.getArgument(0);
+            String variantId = inv.getArgument(1);
+            double price = product.getPrice();
+            if (variantId != null) {
+                price = product.getVariants().stream()
+                        .filter(variant -> variantId.equals(variant.getId()))
+                        .mapToDouble(variant -> variant.getPrice() > 0
+                                ? variant.getPrice() : product.getPrice())
+                        .findFirst().orElse(price);
+            }
+            if (product.getOldPrice() != null && product.getOldPrice() > price) {
+                return new PromotionService.PriceResult(product.getOldPrice(), price,
+                        product.getOldPrice() - price, null, null, null, null, 0);
+            }
+            return new PromotionService.PriceResult(price, price, 0,
+                    null, null, null, null, 0);
         });
         catalog.put("p1", product("p1", 500, 10));
     }
@@ -63,6 +83,34 @@ class CartServiceTest {
     void withoutAreaDeliveryIsUnknown() {
         CartQuote quote = cart.quote(List.of(item("p1", 1)), null);
         assertNull(quote.deliveryCharge());
+        assertEquals(500, quote.total());
+    }
+
+    @Test
+    void appliesValidatedCouponToServerPricedCart() {
+        Coupon coupon = new Coupon();
+        coupon.setCode("SAVE100");
+        when(promotions.validateCoupon(eq("SAVE100"), eq(null), any()))
+                .thenReturn(new PromotionService.CouponValidationResult(true, 100, null, coupon));
+
+        CartQuote quote = cart.quote(List.of(item("p1", 1)), null, "SAVE100", null);
+
+        assertTrue(quote.valid());
+        assertEquals(500, quote.subtotal());
+        assertEquals(100, quote.couponDiscount());
+        assertEquals("SAVE100", quote.couponCode());
+        assertEquals(400, quote.total());
+    }
+
+    @Test
+    void invalidCouponMakesQuoteInvalidWithSpecificError() {
+        when(promotions.validateCoupon(eq("BAD"), eq(null), any()))
+                .thenReturn(PromotionService.CouponValidationResult.invalid("Coupon expired"));
+
+        CartQuote quote = cart.quote(List.of(item("p1", 1)), null, "BAD", null);
+
+        assertFalse(quote.valid());
+        assertEquals("Coupon expired", quote.couponError());
         assertEquals(500, quote.total());
     }
 
