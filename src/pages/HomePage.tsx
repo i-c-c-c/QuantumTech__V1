@@ -194,14 +194,14 @@ export const HomePage: React.FC = () => {
 
             {/* Visual Column */}
             <div className="lg:col-span-5 relative w-full">
-              <div className="relative rounded-2xl overflow-hidden border border-border bg-ink shadow-float group">
+              <div className="relative rounded-2xl overflow-hidden border border-border bg-slate-900 dark:bg-[#181818] shadow-float group">
                 <img
                   src={settings.heroBannerImage || heroBannerImg}
                   alt={settings.storeName || "QuantumTech premium tech accessories showcase"}
                   className="w-full h-auto object-cover group-hover:scale-102 transition-transform duration-500 ease-brand"
                   loading="eager"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent flex flex-col justify-end p-5 sm:p-6">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-transparent dark:from-[#121212]/95 dark:via-[#121212]/40 flex flex-col justify-end p-5 sm:p-6">
                   <span className="caption-3 px-2.5 py-1 rounded bg-quantum text-white inline-block w-fit mb-1 font-semibold">
                     {language === 'bn'
                       ? (settings.heroBannerBadgeBn || settings.heroBannerBadge || '১০০% জেনুইন টেক')
