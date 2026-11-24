@@ -4,6 +4,8 @@ import com.quantumtech.backend.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -35,11 +37,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/forgot-password",
                                 "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**",
-                                "/api/settings", "/api/reviews/**", "/api/orders/track").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/orders", "/api/reviews").permitAll()
+                                "/api/settings", "/api/reviews/**", "/api/orders/track",
+                                "/api/payments/methods").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/orders", "/api/reviews",
+                                "/api/cart/validate", "/api/orders/*/payment").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
+                // Missing/expired token -> 401 (as documented); valid token without the role -> 403.
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
