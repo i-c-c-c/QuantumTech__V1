@@ -23,4 +23,16 @@ class StoreSettingsJsonTest {
         assertEquals("017", mapper.readValue("{\"bKashNumber\":\"017\"}", StoreSettings.class).getBKashNumber());
         assertEquals("018", mapper.readValue("{\"bkashNumber\":\"018\"}", StoreSettings.class).getBKashNumber());
     }
+
+    @Test
+    void includesFrontendV2HeroCustomizationSettings() throws Exception {
+        StoreSettings settings = new StoreSettings();
+        settings.setHeroTitleLine1("Gear up.");
+        settings.setHeroPrimaryCtaTextBn("শপ করুন");
+
+        String json = mapper.writeValueAsString(settings);
+
+        assertTrue(json.contains("\"heroTitleLine1\":\"Gear up.\""), json);
+        assertTrue(json.contains("\"heroPrimaryCtaTextBn\":\"শপ করুন\""), json);
+    }
 }
