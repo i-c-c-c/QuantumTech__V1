@@ -48,32 +48,48 @@ export const CampaignCountdownTimer: React.FC<CampaignCountdownTimerProps> = ({
   if (timeLeft.expired) return null;
 
   return (
-    <div data-testid="campaign-countdown-timer" className={`inline-flex flex-wrap items-center gap-2.5 ${className}`}>
+    <div data-testid="campaign-countdown-timer" className={`inline-flex flex-wrap items-center gap-2 sm:gap-2.5 ${className}`}>
       {label && (
-        <span className="caption-3 font-semibold uppercase tracking-wider flex items-center gap-1.5 opacity-90">
+        <span className="caption-3 font-semibold uppercase tracking-wider flex items-center gap-1.5 text-ink dark:text-slate-200">
           <FontAwesomeIcon icon={Icons.clock} className="h-3 w-3 text-quantum" />
           <span>{label}</span>
         </span>
       )}
-      <div className="flex items-center gap-1.5 font-mono text-xs font-bold tabular-nums">
-        <div className="flex flex-col items-center bg-ink/90 text-white px-2 py-1 rounded-lg border border-slate-700 shadow-2xs min-w-[36px]">
-          <span>{String(timeLeft.days).padStart(2, '0')}</span>
-          <span className="caption-5 text-[9px] text-slate-400 font-sans uppercase">d</span>
+      <div className="flex items-center gap-1 sm:gap-1.5 font-mono text-xs font-bold tabular-nums">
+        <div className="flex flex-col items-center justify-center bg-slate-900 dark:bg-black/70 text-white px-2 sm:px-2.5 py-1 rounded-lg border border-slate-700/80 shadow-2xs min-w-[34px] sm:min-w-[38px]">
+          <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-none">
+            {String(timeLeft.days).padStart(2, '0')}
+          </span>
+          <span className="text-[9px] text-slate-300 dark:text-slate-400 font-sans font-semibold uppercase mt-0.5 tracking-wider">
+            d
+          </span>
         </div>
-        <span className="text-slate-400 font-bold">:</span>
-        <div className="flex flex-col items-center bg-ink/90 text-white px-2 py-1 rounded-lg border border-slate-700 shadow-2xs min-w-[36px]">
-          <span>{String(timeLeft.hours).padStart(2, '0')}</span>
-          <span className="caption-5 text-[9px] text-slate-400 font-sans uppercase">h</span>
+        <span className="text-slate-400 dark:text-slate-500 font-bold text-xs">:</span>
+        <div className="flex flex-col items-center justify-center bg-slate-900 dark:bg-black/70 text-white px-2 sm:px-2.5 py-1 rounded-lg border border-slate-700/80 shadow-2xs min-w-[34px] sm:min-w-[38px]">
+          <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-none">
+            {String(timeLeft.hours).padStart(2, '0')}
+          </span>
+          <span className="text-[9px] text-slate-300 dark:text-slate-400 font-sans font-semibold uppercase mt-0.5 tracking-wider">
+            h
+          </span>
         </div>
-        <span className="text-slate-400 font-bold">:</span>
-        <div className="flex flex-col items-center bg-ink/90 text-white px-2 py-1 rounded-lg border border-slate-700 shadow-2xs min-w-[36px]">
-          <span>{String(timeLeft.minutes).padStart(2, '0')}</span>
-          <span className="caption-5 text-[9px] text-slate-400 font-sans uppercase">m</span>
+        <span className="text-slate-400 dark:text-slate-500 font-bold text-xs">:</span>
+        <div className="flex flex-col items-center justify-center bg-slate-900 dark:bg-black/70 text-white px-2 sm:px-2.5 py-1 rounded-lg border border-slate-700/80 shadow-2xs min-w-[34px] sm:min-w-[38px]">
+          <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-none">
+            {String(timeLeft.minutes).padStart(2, '0')}
+          </span>
+          <span className="text-[9px] text-slate-300 dark:text-slate-400 font-sans font-semibold uppercase mt-0.5 tracking-wider">
+            m
+          </span>
         </div>
-        <span className="text-slate-400 font-bold">:</span>
-        <div className="flex flex-col items-center bg-ink/90 text-white px-2 py-1 rounded-lg border border-slate-700 shadow-2xs min-w-[36px]">
-          <span>{String(timeLeft.seconds).padStart(2, '0')}</span>
-          <span className="caption-5 text-[9px] text-slate-400 font-sans uppercase">s</span>
+        <span className="text-slate-400 dark:text-slate-500 font-bold text-xs">:</span>
+        <div className="flex flex-col items-center justify-center bg-slate-900 dark:bg-black/70 text-white px-2 sm:px-2.5 py-1 rounded-lg border border-slate-700/80 shadow-2xs min-w-[34px] sm:min-w-[38px]">
+          <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-none">
+            {String(timeLeft.seconds).padStart(2, '0')}
+          </span>
+          <span className="text-[9px] text-slate-300 dark:text-slate-400 font-sans font-semibold uppercase mt-0.5 tracking-wider">
+            s
+          </span>
         </div>
       </div>
     </div>
