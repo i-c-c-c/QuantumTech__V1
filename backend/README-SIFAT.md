@@ -137,6 +137,12 @@ Full contract, UI states and error codes: [docs/checkout-payment-integration.md]
 | Method | Endpoint | Access |
 |---|---|---|
 | POST | `/api/cart/validate` | Public: server-priced cart, stock issues, delivery charge, total |
+| POST | `/api/coupons/validate` | Public: validates a coupon against a server-priced cart |
+| GET | `/api/promotions/campaigns/active` | Public: active campaigns |
+| GET | `/api/promotions/campaigns/{slug}` | Public: active campaign landing page |
+| GET | `/api/promotions/popups/active` | Public: enabled and in-range promotional popups |
+| GET | `/api/promotions/product-discounts/active` | Public: active product discounts |
+| POST | `/api/promotions/analytics/events` | Public: storefront engagement events (order/redeem events are rejected) |
 | GET | `/api/payments/methods` | Public: COD/bKash/Nagad availability, receiving numbers, EN/BN steps |
 | POST | `/api/orders` | Public guest checkout, returns the order confirmation |
 | GET | `/api/orders/track?orderNumber=...&phone=...` | Public, 10 lookups / 15 min per IP |
@@ -146,6 +152,11 @@ Full contract, UI states and error codes: [docs/checkout-payment-integration.md]
 | PATCH | `/api/admin/orders/{id}/status` | Admin |
 | PATCH | `/api/admin/orders/{id}/payment` | Admin: `Verified`, `Failed`, `Refunded` |
 | GET | `/api/admin/dashboard` | Admin |
+| GET/POST/DELETE | `/api/admin/promotions/campaigns[/{id}]` | Admin: manage campaigns |
+| GET/POST/DELETE | `/api/admin/promotions/popups[/{id}]` | Admin: manage promotional popups |
+| GET/POST/DELETE | `/api/admin/promotions/product-discounts[/{id}]` | Admin: manage product discounts |
+| GET/POST/DELETE | `/api/admin/promotions/coupons[/{id}]` | Admin: manage coupons |
+| GET/DELETE | `/api/admin/promotions/analytics` | Admin: view or clear promotion analytics |
 
 Checkout body:
 
@@ -159,6 +170,7 @@ Checkout body:
   "paymentMethod": "bKash",
   "trxId": "9K8J7H6G5F",
   "senderNumber": "01712345678",
+  "couponCode": "SAVE10",
   "total": 1570,
   "source": "Facebook",
   "language": "en",
@@ -174,10 +186,11 @@ Checkout body:
 
 Send `X-Idempotency-Key: <uuid per checkout attempt>`: repeating it returns the same order.
 The backend reprices everything server-side (client `subtotal`, `deliveryCharge` and
-`couponDiscount` are ignored), reserves stock atomically and rolls back on failure.
+`couponDiscount` are ignored), applies active product discounts, validates and records
+`couponCode` redemptions, reserves stock atomically and rolls back on failure.
 If `total` is sent and no longer matches, checkout returns `409 PRICE_CHANGED` with the fresh cart.
-Coupons are not supported yet (`400 COUPON_INVALID`). Order numbers are `QT-yyMMdd-NNNN`
-(Bangladesh date, daily sequence).
+Invalid, expired, exhausted or inapplicable coupons return `400 COUPON_INVALID`. Order numbers
+are `QT-yyMMdd-NNNN` (Bangladesh date, daily sequence).
 
 Status changes:
 

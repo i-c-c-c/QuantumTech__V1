@@ -7,7 +7,7 @@ import java.util.List;
  *
  * @param valid          true when every line is OK and checkout can proceed
  * @param deliveryCharge null when no area was supplied
- * @param total          subtotal of OK lines plus delivery charge (if known)
+ * @param total          discounted subtotal plus delivery charge (if known), less a valid coupon
  * @param itemCount      total units across OK lines
  * @param issues         one message per line that is not OK
  */
@@ -19,5 +19,9 @@ public record CartQuote(
         int subtotal,
         Integer deliveryCharge,
         int total,
-        List<String> issues
+        List<String> issues,
+        int promotionalDiscount,
+        String couponCode,
+        int couponDiscount,
+        String couponError
 ) {}

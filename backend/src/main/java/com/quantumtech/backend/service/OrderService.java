@@ -39,6 +39,7 @@ public class OrderService {
     private final OrderRepository orders;
     private final ProductRepository products;
     private final CartService cart;
+    private final PromotionService promotions;
     private final StockService stock;
     private final OrderNumberGenerator orderNumbers;
     private final PaymentMethodCatalog paymentMethods;
@@ -47,12 +48,14 @@ public class OrderService {
     private final MongoTemplate mongo;
 
     public OrderService(OrderRepository orders, ProductRepository products, CartService cart,
+                        PromotionService promotions,
                         StockService stock, OrderNumberGenerator orderNumbers,
                         PaymentMethodCatalog paymentMethods, LookupRateLimiter lookupLimiter,
                         NotificationService notificationService, MongoTemplate mongo) {
         this.orders = orders;
         this.products = products;
         this.cart = cart;
+        this.promotions = promotions;
         this.stock = stock;
         this.orderNumbers = orderNumbers;
         this.paymentMethods = paymentMethods;
@@ -112,10 +115,6 @@ public class OrderService {
                     method + " payment is not available right now. Please choose another payment method.",
                     Map.of("code", "PAYMENT_METHOD_UNAVAILABLE"));
         }
-        if (!isBlank(request.couponCode())) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid or expired coupon code",
-                    Map.of("code", "COUPON_INVALID"));
-        }
         String phone = Phone.normalize(request.phone());
         if (!Phone.isValid(phone)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, Phone.MESSAGE);
@@ -133,7 +132,11 @@ public class OrderService {
             ensureTrxIdUnused(trxId);
         }
 
-        CartQuote quote = cart.quote(request.items(), request.area());
+        CartQuote quote = cart.quote(request.items(), request.area(), request.couponCode(), phone);
+        if (quote.couponError() != null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, quote.couponError(),
+                    Map.of("code", "COUPON_INVALID", "cart", quote));
+        }
         if (!quote.valid()) {
             throw new ApiException(HttpStatus.CONFLICT, quote.issues().get(0),
                     Map.of("code", "CART_INVALID", "cart", quote));
@@ -148,7 +151,8 @@ public class OrderService {
         List<Reservation> reserved = reserveStock(quote);
         try {
             Order order = buildOrder(request, quote, phone, trxId, senderNumber, key);
-            Order saved = insertWithOrderNumber(order);
+            Order saved = insertWithOrderNumber(order, quote, phone);
+            promotions.recordOrderCompleted(saved);
             notifyOwnerSafely(saved);
             return saved;
         } catch (DuplicateKeyException ex) {
@@ -193,6 +197,9 @@ public class OrderService {
         order.setAddress(request.address().trim());
         order.setNote(isBlank(request.note()) ? null : request.note().trim());
         order.setSubtotal(quote.subtotal());
+        order.setPromotionalDiscount(quote.promotionalDiscount());
+        order.setCouponCode(quote.couponCode());
+        order.setCouponDiscount(quote.couponDiscount() > 0 ? quote.couponDiscount() : null);
         order.setDeliveryCharge(quote.deliveryCharge());
         order.setTotal(quote.total());
         order.setPaymentMethod(request.paymentMethod());
@@ -221,6 +228,8 @@ public class OrderService {
             item.setVariantName(line.variantName());
             item.setUnitPrice(line.unitPrice());
             item.setOriginalPrice(line.originalPrice());
+            item.setDiscountAmount(line.discountAmount() > 0 ? line.discountAmount() : null);
+            item.setAppliedDiscountId(line.appliedDiscountId());
             item.setQuantity(line.quantity());
             item.setLineTotal(line.lineTotal());
             item.setImage(line.image());
@@ -241,16 +250,34 @@ public class OrderService {
     }
 
     /** Retries with a fresh number if an order number collides (e.g. with legacy numbering). */
-    private Order insertWithOrderNumber(Order order) {
+    private Order insertWithOrderNumber(Order order, CartQuote quote, String phone) {
         for (int attempt = 1; ; attempt++) {
             order.setOrderNumber(orderNumbers.next());
+            boolean couponRecorded = false;
             try {
+                if (quote.couponCode() != null) {
+                    promotions.recordCouponUsage(quote.couponCode(), phone, order.getOrderNumber(),
+                            quote.couponDiscount(), quote.items().stream()
+                                    .filter(CartLine::isOk)
+                                    .map(line -> new PromotionService.CouponLine(
+                                            line.productId(), line.categoryId(), line.lineTotal()))
+                                    .toList());
+                    couponRecorded = true;
+                }
                 return orders.insert(order);
             } catch (DuplicateKeyException ex) {
+                if (couponRecorded) {
+                    promotions.rollbackCouponUsage(quote.couponCode(), order.getOrderNumber());
+                }
                 boolean numberClash = String.valueOf(ex.getMessage())
                         .contains(OrderIndexInitializer.ORDER_NUMBER_INDEX);
                 if (!numberClash || attempt >= MAX_ORDER_NUMBER_ATTEMPTS) throw ex;
                 log.warn("Order number {} already exists, retrying", order.getOrderNumber());
+            } catch (RuntimeException ex) {
+                if (couponRecorded) {
+                    promotions.rollbackCouponUsage(quote.couponCode(), order.getOrderNumber());
+                }
+                throw ex;
             }
         }
     }

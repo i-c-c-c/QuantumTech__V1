@@ -31,7 +31,7 @@ public class CheckoutController {
     /** Re-prices a browser cart: current prices, stock problems, delivery charge and total. */
     @PostMapping("/cart/validate")
     public CartQuote validateCart(@Valid @RequestBody CartValidationRequest request) {
-        return cart.quote(request.items(), request.area());
+        return cart.quote(request.items(), request.area(), request.couponCode(), request.customerPhone());
     }
 
     /** COD/bKash/Nagad options with availability, receiving numbers and EN/BN instructions. */
