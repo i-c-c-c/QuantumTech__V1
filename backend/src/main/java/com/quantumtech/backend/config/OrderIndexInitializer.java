@@ -1,6 +1,8 @@
 package com.quantumtech.backend.config;
 
 import com.quantumtech.backend.model.Order;
+import com.quantumtech.backend.model.Coupon;
+import com.quantumtech.backend.model.CouponUsage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -39,6 +41,12 @@ public class OrderIndexInitializer {
         ensure(ops, new Index().on("idempotencyKey", Sort.Direction.ASC).unique().sparse().named(IDEMPOTENCY_INDEX));
         ensure(ops, new Index().on("status", Sort.Direction.ASC).on("createdAt", Sort.Direction.DESC)
                 .named("status_createdAt"));
+        ensure(mongo.indexOps(Coupon.class), new Index().on("code", Sort.Direction.ASC)
+                .unique().named("couponCode_unique"));
+        ensure(mongo.indexOps(CouponUsage.class), new Index()
+                .on("couponId", Sort.Direction.ASC)
+                .on("orderNumber", Sort.Direction.ASC)
+                .unique().named("couponOrder_unique"));
     }
 
     private void ensure(IndexOperations ops, Index index) {

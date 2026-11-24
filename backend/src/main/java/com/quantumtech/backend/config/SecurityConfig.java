@@ -38,9 +38,10 @@ public class SecurityConfig {
                                 "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**",
                                 "/api/settings", "/api/reviews/**", "/api/orders/track",
-                                "/api/payments/methods").permitAll()
+                                "/api/payments/methods", "/api/promotions/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders", "/api/reviews",
-                                "/api/cart/validate", "/api/orders/*/payment").permitAll()
+                                "/api/cart/validate", "/api/orders/*/payment",
+                                "/api/coupons/validate", "/api/promotions/analytics/events").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
