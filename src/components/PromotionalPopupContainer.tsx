@@ -198,21 +198,21 @@ export const PromotionalPopupContainer: React.FC = () => {
   };
 
   // Safe styling helpers
-  const bgStyle = { backgroundColor: popup.backgroundColor || '#FFFFFF' };
-  const textStyle = { color: popup.textColor || '#0F172A' };
+  const bgStyle = popup.backgroundColor ? { backgroundColor: popup.backgroundColor } : undefined;
+  const textStyle = popup.textColor ? { color: popup.textColor } : undefined;
   const btnStyle = { backgroundColor: popup.buttonColor || '#2563EB' };
 
   return (
     <div
       data-testid="promotional-popup"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-ink/70 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 dark:bg-black/75 backdrop-blur-md animate-fadeIn"
       role="dialog"
       aria-modal="true"
       aria-label={popup.heading}
       onClick={handleClose}
     >
       <div
-        className="relative w-full max-w-[420px] sm:max-w-md max-h-[92vh] overflow-y-auto rounded-2xl overflow-hidden shadow-2xl border border-border/80 animate-scaleUp transition-all"
+        className="relative m-auto w-full max-w-[420px] sm:max-w-md max-h-[90vh] overflow-y-auto rounded-2xl overflow-hidden shadow-2xl bg-surface text-ink dark:bg-[#181818] dark:text-white border border-border dark:border-slate-700/60 animate-scaleUp transition-all"
         style={bgStyle}
         onClick={(e) => e.stopPropagation()}
       >
