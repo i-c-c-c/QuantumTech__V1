@@ -3,6 +3,7 @@ import { initialReviews } from '../data/mockData';
 import { getItem, setItem, STORAGE_KEYS } from '../utilities/storage';
 import { orderService } from './orderService';
 import { productService } from './productService';
+import { syncReviewCreate, syncReviewDelete, syncReviewModerate } from './backend';
 
 export const reviewService = {
   // Storefront: Returns approved reviews for a given product with optional sorting
@@ -203,6 +204,7 @@ export const reviewService = {
     setItem(STORAGE_KEYS.REVIEWS, all);
 
     window.dispatchEvent(new Event('quantum_reviews_updated'));
+    syncReviewCreate(newReview);
 
     return { success: true, review: newReview };
   },
@@ -222,6 +224,7 @@ export const reviewService = {
       this.recalculateProductStats(review.productId);
 
       window.dispatchEvent(new Event('quantum_reviews_updated'));
+      syncReviewModerate(id, status);
     }
   },
 
@@ -237,6 +240,7 @@ export const reviewService = {
     }
 
     window.dispatchEvent(new Event('quantum_reviews_updated'));
+    syncReviewDelete(id);
   },
 
   // Recalculates product rating and reviewsCount using only approved reviews

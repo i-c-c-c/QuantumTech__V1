@@ -14,13 +14,16 @@ interface CartContextType {
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
+  serverQuote: import('../services/cartService').ServerCartQuote | null;
 }
+
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>(() => cartService.getCart());
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [serverQuote, setServerQuote] = useState<import('../services/cartService').ServerCartQuote | null>(null);
   const { showToast } = useToast();
   const { language, t } = useLanguage();
 
@@ -31,6 +34,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.addEventListener('quantum_cart_updated', handleCartSync);
     return () => window.removeEventListener('quantum_cart_updated', handleCartSync);
   }, []);
+
+  // Fetch live server quote whenever cart items change
+  useEffect(() => {
+    const fetchQuote = async () => {
+      const quote = await cartService.validateCartLive(items);
+      setServerQuote(quote);
+      if (quote?.issues?.length) {
+        quote.issues.forEach(issue => {
+          showToast(issue, 'warning');
+        });
+      }
+    };
+    if (items.length) {
+      fetchQuote();
+    } else {
+      setServerQuote(null);
+    }
+  }, [items]);
+
 
   const { totalCount, subtotal } = cartService.calculateTotals(items);
 
@@ -99,6 +121,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         removeFromCart,
         updateQuantity,
         clearCart,
+        serverQuote,
       }}
     >
       {children}

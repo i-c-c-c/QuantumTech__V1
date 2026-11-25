@@ -67,14 +67,14 @@ export const AdminOrdersPage: React.FC = () => {
   const pendingCount = pendingOrders.length;
   const oldPendingCount = pendingOrders.filter(o => new Date(o.createdAt).getTime() < oneDayAgo).length;
 
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
     if (!orderToCancel) return;
     if (!cancelReason.trim()) {
       showToast('Please specify a cancellation reason.', 'error');
       return;
     }
 
-    const res = orderService.updateOrderStatus(orderToCancel.id, 'Cancelled', 'Admin', cancelReason, cancelReason);
+    const res = await orderService.updateOrderStatusLive(orderToCancel.id, 'Cancelled', 'Admin', cancelReason, cancelReason);
     if (!res.success) {
       showToast(res.error || 'Failed to cancel order.', 'error');
       return;

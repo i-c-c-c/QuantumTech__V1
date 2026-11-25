@@ -49,16 +49,18 @@ export const AdminLoginPage: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const res = login(email, password, rememberMe);
-      setIsSubmitting(false);
+    window.setTimeout(() => {
+      void (async () => {
+        const res = await login(email, password, rememberMe);
+        setIsSubmitting(false);
 
-      if (!res.success) {
-        setError(res.error || 'Authentication failed. Please verify your credentials.');
-      } else {
-        const from = (location.state as any)?.from?.pathname || '/admin/dashboard';
-        navigate(from, { replace: true });
-      }
+        if (!res.success) {
+          setError(res.error || 'Authentication failed. Please verify your credentials.');
+        } else {
+          const from = (location.state as any)?.from?.pathname || '/admin/dashboard';
+          navigate(from, { replace: true });
+        }
+      })();
     }, 250);
   };
 

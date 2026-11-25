@@ -1,5 +1,6 @@
 import { AdminSession } from '../types';
 import { getItem, setItem, removeItem, STORAGE_KEYS } from '../utilities/storage';
+import { api, ApiError, isBackendConnected, refreshAdminCatalog, setAdminToken } from './backend';
 
 const FAILED_ATTEMPTS_KEY = 'qt_admin_failed_attempts';
 const LOCKED_UNTIL_KEY = 'qt_admin_locked_until';
@@ -40,11 +41,11 @@ export const authService = {
     setItem(REMEMBERED_EMAIL_KEY, email);
   },
 
-  login(
+  async login(
     emailOrPassword: string,
     passwordArg?: string,
     rememberMe: boolean = true
-  ): { success: boolean; session?: AdminSession; error?: string; isLocked?: boolean } {
+  ): Promise<{ success: boolean; session?: AdminSession; error?: string; isLocked?: boolean }> {
     const now = Date.now();
     const { isLocked, lockTimeRemaining } = this.getLockoutState();
 
@@ -72,6 +73,36 @@ export const authService = {
         success: false,
         error: 'Please enter a valid administrator email address.',
       };
+    }
+
+    try {
+      const result = await api<{ token: string; email: string; name: string; role: string }>('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, rememberMe }),
+      });
+      setAdminToken(result.token);
+      const session: AdminSession = {
+        email: result.email,
+        name: result.name,
+        role: result.role === 'Staff' ? 'Staff' : 'Owner',
+        loginTime: now,
+        rememberMe,
+      };
+      setItem(STORAGE_KEYS.ADMIN_SESSION, session);
+      setItem(FAILED_ATTEMPTS_KEY, 0);
+      removeItem(LOCKED_UNTIL_KEY);
+      if (rememberMe) this.setRememberedEmail(email);
+      window.dispatchEvent(new Event('quantum_auth_updated'));
+      await refreshAdminCatalog().catch(() => undefined);
+      return { success: true, session };
+    } catch (error) {
+      // If error is an actual authentication error from backend (HTTP 400, 401, 423 Locked)
+      if (error instanceof ApiError) {
+        const message = error.message || 'Invalid administrator email or password.';
+        const locked = error.status === 423 || message.toLowerCase().includes('locked');
+        return { success: false, isLocked: locked, error: message };
+      }
+      // If network is completely unreachable, fall back to offline demo mode
     }
 
     // Supported demo passwords
@@ -119,11 +150,36 @@ export const authService = {
 
   logout(): void {
     removeItem(STORAGE_KEYS.ADMIN_SESSION);
+    setAdminToken(null);
     window.dispatchEvent(new Event('quantum_auth_updated'));
   },
 
   resetLockout(): void {
     setItem(FAILED_ATTEMPTS_KEY, 0);
     removeItem(LOCKED_UNTIL_KEY);
+  },
+
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await api<{ message: string }>('/api/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+      return { success: true, message: res.message || 'If the account exists, a reset link will be sent.' };
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : 'Failed to send reset link.' };
+    }
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await api<{ message: string }>('/api/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, newPassword }),
+      });
+      return { success: true, message: res.message || 'Password has been reset successfully.' };
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : 'Failed to reset password.' };
+    }
   },
 };

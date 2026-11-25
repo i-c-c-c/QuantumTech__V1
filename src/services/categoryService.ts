@@ -1,6 +1,7 @@
 import { Category, Product } from '../types';
 import { initialCategories, initialProducts } from '../data/mockData';
 import { getItem, setItem, STORAGE_KEYS } from '../utilities/storage';
+import { syncCategory, syncCategoryOrder } from './backend';
 
 export const categoryService = {
   getCategories(): Category[] {
@@ -38,6 +39,7 @@ export const categoryService = {
 
     setItem(STORAGE_KEYS.CATEGORIES, all);
     window.dispatchEvent(new Event('quantum_categories_updated'));
+    syncCategory(cat);
     return cat;
   },
 
@@ -53,6 +55,7 @@ export const categoryService = {
     all.push(newCategory);
     setItem(STORAGE_KEYS.CATEGORIES, all);
     window.dispatchEvent(new Event('quantum_categories_updated'));
+    syncCategory(newCategory);
     return newCategory;
   },
 
@@ -70,6 +73,7 @@ export const categoryService = {
     all[index] = updated;
     setItem(STORAGE_KEYS.CATEGORIES, all);
     window.dispatchEvent(new Event('quantum_categories_updated'));
+    syncCategory(updated);
     return updated;
   },
 
@@ -80,6 +84,7 @@ export const categoryService = {
     }));
     setItem(STORAGE_KEYS.CATEGORIES, updated);
     window.dispatchEvent(new Event('quantum_categories_updated'));
+    syncCategoryOrder(updated);
   },
 
   deleteCategory(id: string): { success: boolean; error?: string } {
@@ -95,9 +100,11 @@ export const categoryService = {
       };
     }
 
+    const removed = this.getCategories().find(c => c.id === id);
     const all = this.getCategories().filter(c => c.id !== id);
     setItem(STORAGE_KEYS.CATEGORIES, all);
     window.dispatchEvent(new Event('quantum_categories_updated'));
+    if (removed) syncCategory(removed, true);
     return { success: true };
   },
 };
