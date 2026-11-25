@@ -43,6 +43,14 @@ public class SecurityConfig {
                                 "/api/cart/validate", "/api/orders/*/payment").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // Storefront pages and Vite assets. API rules above win first.
+                        .requestMatchers(request -> {
+                            String path = request.getRequestURI();
+                            return "GET".equalsIgnoreCase(request.getMethod())
+                                    && !path.startsWith("/api")
+                                    && !path.startsWith("/swagger-ui")
+                                    && !path.startsWith("/api-docs");
+                        }).permitAll()
                         .anyRequest().authenticated())
                 // Missing/expired token -> 401 (as documented); valid token without the role -> 403.
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(

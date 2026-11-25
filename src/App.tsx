@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ScrollToTop } from './components/ScrollToTop';
 import { ThemeProvider } from './context/ThemeContext';
@@ -7,8 +7,13 @@ import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { AppRoutes } from './routes';
+import { connectBackend } from './services/backend';
 
 export const App: React.FC = () => {
+  useEffect(() => {
+    void connectBackend();
+  }, []);
+
   return (
     <BrowserRouter>
       <ScrollToTop />

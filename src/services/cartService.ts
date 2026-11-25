@@ -1,6 +1,29 @@
-import { CartItem, Product, ProductVariant } from '../types';
+import { CartItem, Product, ProductVariant, DeliveryArea } from '../types';
 import { getItem, setItem, STORAGE_KEYS } from '../utilities/storage';
 import { promotionService } from './promotionService';
+import { api, isBackendConnected } from './backend';
+
+export interface ServerCartQuote {
+  valid: boolean;
+  area?: string | null;
+  itemCount: number;
+  subtotal: number;
+  deliveryCharge: number | null;
+  total: number;
+  issues: string[];
+  items: Array<{
+    productId: string;
+    variantId?: string | null;
+    productName: string;
+    variantName?: string | null;
+    unitPrice: number;
+    quantity: number;
+    availableStock: number;
+    lineTotal: number;
+    status: string;
+    message?: string | null;
+  }>;
+}
 
 export const cartService = {
   getCart(): CartItem[] {
@@ -168,5 +191,24 @@ export const cartService = {
     const total = Math.max(0, subtotal + deliveryFee - discount);
 
     return { totalCount, subtotal, total };
+  },
+
+  async validateCartLive(items: CartItem[], area?: DeliveryArea): Promise<ServerCartQuote | null> {
+    if (!items.length || !isBackendConnected()) return null;
+    try {
+      return await api<ServerCartQuote>('/api/cart/validate', {
+        method: 'POST',
+        body: JSON.stringify({
+          area: area || null,
+          items: items.map((item) => ({
+            productId: item.product.id,
+            variantId: item.selectedVariant?.id || null,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+    } catch {
+      return null;
+    }
   },
 };

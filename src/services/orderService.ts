@@ -3,6 +3,18 @@ import { initialOrders } from '../data/mockData';
 import { getItem, setItem, STORAGE_KEYS } from '../utilities/storage';
 import { productService } from './productService';
 import { promotionService } from './promotionService';
+import { api, isBackendConnected, mapPublicOrder, rememberOrder, refreshPublicCatalog } from './backend';
+
+export interface PaymentMethodInfo {
+  code: 'COD' | 'bKash' | 'Nagad';
+  name: string;
+  nameBn: string;
+  available: boolean;
+  requiresTrxId: boolean;
+  merchantNumber: string | null;
+  instructions: string[];
+  instructionsBn: string[];
+}
 
 export const orderService = {
   getOrders(): Order[] {
@@ -55,6 +67,140 @@ export const orderService = {
     }
 
     return { success: true, order };
+  },
+
+  async submitOrder(orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'updatedAt' | 'notificationStatus'>): Promise<Order> {
+    if (!isBackendConnected()) {
+      return this.createOrder(orderData);
+    }
+    if (orderData.couponCode) {
+      throw new Error('Coupon codes are not accepted by the server yet. Remove the coupon and place the order again.');
+    }
+    const raw = await api<Record<string, unknown>>('/api/orders', {
+      method: 'POST',
+      headers: { 'X-Idempotency-Key': crypto.randomUUID() },
+      body: JSON.stringify({
+        customerName: orderData.customerName,
+        phone: orderData.phone,
+        area: orderData.area,
+        address: orderData.address,
+        note: orderData.note,
+        paymentMethod: orderData.paymentMethod,
+        trxId: orderData.trxId,
+        senderNumber: orderData.senderNumber,
+        language: orderData.language,
+        items: orderData.items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+        })),
+      }),
+    });
+    const order = mapPublicOrder(raw, orderData.language);
+    rememberOrder(order);
+    await refreshPublicCatalog().catch(() => undefined);
+    return order;
+  },
+
+  async trackOrderLive(orderNumber: string, phone: string): Promise<{ success: boolean; order?: Order; error?: string }> {
+    if (!isBackendConnected()) {
+      return this.trackOrder(orderNumber, phone);
+    }
+    try {
+      const params = new URLSearchParams({ orderNumber, phone });
+      const raw = await api<Record<string, unknown>>(`/api/orders/track?${params.toString()}`);
+      const order = mapPublicOrder(raw, 'en');
+      rememberOrder(order);
+      return { success: true, order };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'No matching order found.' };
+    }
+  },
+
+  async updateOrderStatusLive(
+    orderId: string,
+    toStatus: OrderStatus,
+    changedBy: string = 'Admin',
+    note?: string,
+    reason?: string
+  ): Promise<{ success: boolean; error?: string; order?: Order }> {
+    if (!isBackendConnected()) {
+      return this.updateOrderStatus(orderId, toStatus, changedBy, note, reason);
+    }
+    try {
+      const order = await api<Order>(`/api/admin/orders/${orderId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: toStatus, note, reason }),
+      });
+      rememberOrder(order);
+      await refreshPublicCatalog().catch(() => undefined);
+      return { success: true, order };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to update order status.' };
+    }
+  },
+
+  async verifyPaymentLive(
+    orderId: string,
+    status: PaymentStatus,
+    changedBy: string = 'Admin',
+    note?: string
+  ): Promise<{ success: boolean; error?: string; order?: Order }> {
+    if (!isBackendConnected()) {
+      return this.verifyPayment(orderId, status, changedBy, note);
+    }
+    try {
+      const order = await api<Order>(`/api/admin/orders/${orderId}/payment`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, note }),
+      });
+      rememberOrder(order);
+      return { success: true, order };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to update payment status.' };
+    }
+  },
+
+  async getPaymentMethodsLive(): Promise<PaymentMethodInfo[]> {
+    if (!isBackendConnected()) return [];
+    try {
+      return await api<PaymentMethodInfo[]>('/api/payments/methods');
+    } catch {
+      return [];
+    }
+  },
+
+  async resubmitPaymentLive(
+    orderNumber: string,
+    phone: string,
+    paymentMethod: 'bKash' | 'Nagad',
+    trxId: string,
+    senderNumber: string,
+    language: Language = 'en'
+  ): Promise<{ success: boolean; order?: Order; error?: string }> {
+    if (!isBackendConnected()) {
+      return { success: false, error: 'Backend is not connected.' };
+    }
+    try {
+      const raw = await api<Record<string, unknown>>(`/api/orders/${encodeURIComponent(orderNumber)}/payment`, {
+        method: 'POST',
+        body: JSON.stringify({ phone, paymentMethod, trxId, senderNumber }),
+      });
+      const order = mapPublicOrder(raw, language);
+      rememberOrder(order);
+      return { success: true, order };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to resubmit payment.' };
+    }
+  },
+
+  async getDashboardStatsLive(): Promise<Record<string, unknown> | null> {
+    if (!isBackendConnected()) return null;
+    try {
+      return await api<Record<string, unknown>>('/api/admin/dashboard');
+    } catch {
+      return null;
+    }
   },
 
   createOrder(orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'updatedAt' | 'notificationStatus'>): Order {

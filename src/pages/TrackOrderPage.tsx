@@ -3,8 +3,11 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { orderService } from '../services/orderService';
 import { settingsService } from '../services/settingsService';
+import { useToast } from '../context/ToastContext';
+// Added import for language context
 import { useLanguage } from '../context/LanguageContext';
 import { Order, OrderStatus } from '../types';
+import { PaymentMethodInfo } from '../services/orderService';
 import { Icons } from '../utilities/icons';
 import { formatCurrency, formatNumber } from '../utilities/currency';
 import { Breadcrumb } from '../components/Breadcrumb';
@@ -12,12 +15,52 @@ import { Breadcrumb } from '../components/Breadcrumb';
 export const TrackOrderPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { language, t } = useLanguage();
+  const { showToast } = useToast();
 
   const [orderNumber, setOrderNumber] = useState(searchParams.get('order') || '');
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodInfo[]>([]);
+  const [trxId, setTrxId] = useState('');
+  const [senderNumber, setSenderNumber] = useState('');
+  const [isResubmitting, setIsResubmitting] = useState(false);
+  // Load payment methods on mount (for checking requirements)
+  useEffect(() => {
+    void (async () => {
+      const methods = await orderService.getPaymentMethodsLive();
+      setPaymentMethods(methods);
+    })();
+  }, []);
+
+  const handleResubmit = async () => {
+    if (!trackedOrder) return;
+    setIsResubmitting(true);
+    const result = await orderService.resubmitPaymentLive(
+      trackedOrder.orderNumber,
+      trackedOrder.phone,
+      trackedOrder.paymentMethod as any,
+      trxId,
+      senderNumber,
+      trackedOrder.language ?? 'en'
+    );
+    setIsResubmitting(false);
+    if (result.success && result.order) {
+      setTrackedOrder(result.order);
+      showToast(
+        language === 'bn' ? 'পেমেন্ট সফলভাবে রিসাবমিট করা হয়েছে।' : 'Payment resubmitted successfully.',
+        'success'
+      );
+    } else {
+      showToast(
+        result.error || (language === 'bn' ? 'পেমেন্ট রিসাবমিট ব্যর্থ হয়েছে।' : 'Failed to resubmit payment.'),
+        'error'
+      );
+    }
+  };
+
   const [phone, setPhone] = useState('');
   const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+
   const [settings, setSettings] = useState(() => settingsService.getSettings());
 
   useEffect(() => {
@@ -56,11 +99,15 @@ export const TrackOrderPage: React.FC = () => {
 
   const handleTrackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    void track(orderNumber, phone);
+  };
+
+  const track = async (rawNumber: string, rawPhone: string) => {
     setErrorMessage('');
     setHasSearched(true);
 
-    const cleanNum = orderNumber.trim();
-    const cleanPhone = phone.trim().replace(/[\s-]/g, '');
+    const cleanNum = rawNumber.trim();
+    const cleanPhone = rawPhone.trim().replace(/[\s-]/g, '');
 
     if (!cleanNum || !cleanPhone) {
       setErrorMessage(
@@ -72,7 +119,7 @@ export const TrackOrderPage: React.FC = () => {
       return;
     }
 
-    const result = orderService.trackOrder(cleanNum, cleanPhone);
+    const result = await orderService.trackOrderLive(cleanNum, cleanPhone);
     if (result.success && result.order) {
       setTrackedOrder(result.order);
       setErrorMessage('');
@@ -380,6 +427,56 @@ export const TrackOrderPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Ordered Products Breakdown */}
+          {/* Payment‑Resubmit UI (if pending and requires TxID) */}
+          {(trackedOrder.paymentStatus === 'Verification pending'
+            || trackedOrder.paymentStatus === 'Failed') && (
+            (() => {
+              const methodInfo = paymentMethods.find((m) => m.code === trackedOrder.paymentMethod);
+              if (!methodInfo?.requiresTrxId) return null;
+              return (
+                <div className="mt-6 p-6 bg-surface rounded-xl border border-border">
+                  <h3 className="title-4 font-semibold mb-4 text-ink">
+                    {language === 'bn' ? 'পেমেন্ট রিসাবমিট করুন' : 'Resubmit Payment'}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="caption-3 font-medium text-ink block mb-1.5">
+                        {language === 'bn' ? 'ট্রানজ্যাকশন আইডি (TxID)' : 'Transaction ID (TxID)'}
+                      </label>
+                      <input
+                        type="text"
+                        value={trxId}
+                        onChange={(e) => setTrxId(e.target.value)}
+                        placeholder={language === 'bn' ? 'TxID লিখুন' : 'Enter TxID'}
+                        className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:outline-none focus:border-quantum focus:ring-2 focus:ring-quantum-soft"
+                      />
+                    </div>
+                    <div>
+                      <label className="caption-3 font-medium text-ink block mb-1.5">
+                        {language === 'bn' ? 'সেন্ডার নম্বর' : 'Sender Number'}
+                      </label>
+                      <input
+                        type="text"
+                        value={senderNumber}
+                        onChange={(e) => setSenderNumber(e.target.value)}
+                        placeholder={language === 'bn' ? 'সেন্ডার মোবাইল নম্বর লিখুন' : 'Enter sender mobile number'}
+                        className="w-full rounded-xl border border-border px-4 py-2.5 text-sm focus:outline-none focus:border-quantum focus:ring-2 focus:ring-quantum-soft"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleResubmit}
+                    disabled={isResubmitting}
+                    className="btn-base w-full bg-quantum text-white hover:bg-quantum-hover disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isResubmitting ? (language === 'bn' ? 'প্রসেস হচ্ছে…' : 'Processing…') : (language === 'bn' ? 'পেমেন্ট রিসাবমিট করুন' : 'Resubmit Payment')}
+                  </button>
+                </div>
+              );
+            })()
+          )}
           {/* Ordered Products Breakdown */}
           <div>
             <h3 className="title-3 font-bold text-ink mb-3 pb-2 border-b border-border">

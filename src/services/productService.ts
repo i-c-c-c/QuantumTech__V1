@@ -2,6 +2,7 @@ import { Product, ProductVariant, Category } from '../types';
 import { initialProducts } from '../data/mockData';
 import { getItem, setItem, STORAGE_KEYS } from '../utilities/storage';
 import { categoryService } from './categoryService';
+import { syncProduct } from './backend';
 
 export const productService = {
   // Calculate total stock by summing all variant stocks
@@ -137,6 +138,7 @@ export const productService = {
     setItem(STORAGE_KEYS.PRODUCTS, all);
     // Dispatch custom event to notify all components in this browser window
     window.dispatchEvent(new Event('quantum_products_updated'));
+    syncProduct(completeProduct);
     return completeProduct;
   },
 
@@ -175,6 +177,7 @@ export const productService = {
     all[index] = updatedProduct;
     setItem(STORAGE_KEYS.PRODUCTS, all);
     window.dispatchEvent(new Event('quantum_products_updated'));
+    syncProduct(updatedProduct);
     return updatedProduct;
   },
 
@@ -220,6 +223,8 @@ export const productService = {
     const updated = all.map(p => (p.id === id ? { ...p, status: 'Deleted' as const } : p));
     setItem(STORAGE_KEYS.PRODUCTS, updated);
     window.dispatchEvent(new Event('quantum_products_updated'));
+    const removed = updated.find((p) => p.id === id);
+    if (removed) syncProduct(removed, true);
   },
 
   searchProducts(query: string, _lang?: string): Product[] {

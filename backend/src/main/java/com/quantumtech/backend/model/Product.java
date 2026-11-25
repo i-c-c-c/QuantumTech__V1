@@ -1,6 +1,11 @@
 package com.quantumtech.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -30,8 +35,38 @@ public class Product {
     private Map<String, String> specificationsBn = new HashMap<>();
     private double rating;
     private int reviewsCount;
+
+    // Storefront JSON uses isFeatured / isNew. Lombok's boolean accessors would
+    // otherwise publish these as "featured" and "new".
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private boolean featured;
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private boolean isNew;
+
     private String status = "Active";
     private List<String> tags = new ArrayList<>();
+
+    @JsonProperty("isFeatured")
+    public boolean isFeatured() {
+        return featured;
+    }
+
+    @JsonProperty("isFeatured")
+    @JsonAlias("featured")
+    public void setFeatured(boolean featured) {
+        this.featured = featured;
+    }
+
+    @JsonProperty("isNew")
+    public boolean getIsNew() {
+        return isNew;
+    }
+
+    @JsonProperty("isNew")
+    public void setIsNew(boolean isNew) {
+        this.isNew = isNew;
+    }
 }

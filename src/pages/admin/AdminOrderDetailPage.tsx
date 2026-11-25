@@ -45,9 +45,9 @@ export const AdminOrderDetailPage: React.FC = () => {
   };
 
   // Payment Verification Handler
-  const handleVerifyPayment = (newStatus: 'Verified' | 'Failed') => {
+  const handleVerifyPayment = async (newStatus: 'Verified' | 'Failed') => {
     if (!order) return;
-    const res = orderService.verifyPayment(order.id, newStatus);
+    const res = await orderService.verifyPaymentLive(order.id, newStatus);
     if (!res.success) {
       showToast(res.error || 'Failed to update payment status.', 'error');
       return;
@@ -58,9 +58,9 @@ export const AdminOrderDetailPage: React.FC = () => {
   };
 
   // Status Progression Handler
-  const handleStatusChange = (newStatus: OrderStatus) => {
+  const handleStatusChange = async (newStatus: OrderStatus) => {
     if (!order) return;
-    const res = orderService.updateOrderStatus(order.id, newStatus);
+    const res = await orderService.updateOrderStatusLive(order.id, newStatus);
     if (!res.success) {
       showToast(res.error || 'Failed to update order status.', 'error');
       return;
@@ -70,13 +70,13 @@ export const AdminOrderDetailPage: React.FC = () => {
   };
 
   // Confirm Cancellation
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
     if (!order) return;
     if (!cancelReason.trim()) {
       showToast('Please provide a reason for cancellation.', 'error');
       return;
     }
-    const res = orderService.updateOrderStatus(order.id, 'Cancelled', 'Admin', cancelReason, cancelReason);
+    const res = await orderService.updateOrderStatusLive(order.id, 'Cancelled', 'Admin', cancelReason, cancelReason);
     if (!res.success) {
       showToast(res.error || 'Failed to cancel order.', 'error');
       return;

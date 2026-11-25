@@ -4,7 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useToast } from '../context/ToastContext';
-import { orderService } from '../services/orderService';
+import { orderService, PaymentMethodInfo } from '../services/orderService';
+import { cartService, ServerCartQuote } from '../services/cartService';
 import { settingsService } from '../services/settingsService';
 import { promotionService } from '../services/promotionService';
 import { formatCurrency } from '../utilities/currency';
@@ -31,6 +32,8 @@ export const CheckoutPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [storeSettings, setStoreSettings] = useState(() => settingsService.getSettings());
+  const [serverQuote, setServerQuote] = useState<ServerCartQuote | null>(null);
+  const [, setPaymentMethodsLive] = useState<PaymentMethodInfo[]>([]);
 
   // Coupon state
   const [couponInput, setCouponInput] = useState('');
@@ -45,11 +48,30 @@ export const CheckoutPage: React.FC = () => {
     return () => window.removeEventListener('quantum_settings_updated', handleSync);
   }, []);
 
+  useEffect(() => {
+    void orderService.getPaymentMethodsLive().then((methods) => {
+      if (methods.length > 0) setPaymentMethodsLive(methods);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (items.length === 0) {
+      setServerQuote(null);
+      return;
+    }
+    void cartService.validateCartLive(items, area).then((quote) => {
+      if (quote) setServerQuote(quote);
+    });
+  }, [items, area]);
+
+  const effectiveSubtotal = serverQuote ? serverQuote.subtotal : subtotal;
   const deliveryCharge =
-    area === 'Inside Dhaka'
+    serverQuote && serverQuote.deliveryCharge !== null
+      ? serverQuote.deliveryCharge
+      : area === 'Inside Dhaka'
       ? storeSettings.deliveryChargeInsideDhaka
       : storeSettings.deliveryChargeOutsideDhaka;
-  const totalPayable = Math.max(0, subtotal + deliveryCharge - couponDiscount);
+  const totalPayable = Math.max(0, effectiveSubtotal + deliveryCharge - couponDiscount);
 
   const handleApplyCoupon = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -146,7 +168,7 @@ export const CheckoutPage: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -188,7 +210,7 @@ export const CheckoutPage: React.FC = () => {
           ? 'Pending collection'
           : 'Verification pending';
 
-      const newOrder = orderService.createOrder({
+      const newOrder = await orderService.submitOrder({
         customerName: fullName.trim(),
         phone: phone.trim().replace(/[\s-]/g, ''),
         area,
@@ -221,7 +243,8 @@ export const CheckoutPage: React.FC = () => {
       navigate(`/order-confirmation/${newOrder.orderNumber}`);
     } catch (err) {
       console.error('Order creation error:', err);
-      showToast('An error occurred while saving your order. Please try again.', 'error');
+      const message = err instanceof Error ? err.message : 'An error occurred while saving your order. Please try again.';
+      showToast(message, 'error');
       setIsSubmitting(false);
     }
   };
